@@ -24,20 +24,20 @@ class Method(int):
             return True
         return int(self) != int(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()
 
 
 class DimensionAsKey:
     _data: dict[tuple[Any, ...], dict[tuple[int, ...], Any]]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._data = defaultdict(dict)
 
     def __getitem__(self, key: tuple[Any, ...]) -> dict[tuple[int, ...], Any]:
         return self._data[key]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[tuple[Any, ...]]:
         return iter(self._data)
 
     def pop(self, key: tuple[Any, ...]) -> dict[tuple[int, ...], Any]:
@@ -52,7 +52,7 @@ class Register(Generic[K]):
     RANGE: Method = Method(4)
     _data: dict[K, DimensionAsKey]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._data = defaultdict(DimensionAsKey)
 
     def __getitem__(self, key: K) -> DimensionAsKey:
@@ -78,7 +78,7 @@ class Register(Generic[K]):
 
     def as_frames(self, display_cn: bool = False) -> dict[tuple[Dimension, ...], pd.DataFrame]:
         frames: dict[tuple[Dimension, ...], pd.DataFrame] = {}
-        rows: dict[tuple[Dimension, ...], dict[tuple[int, ...], list]] = {}
+        rows: dict[tuple[Dimension, ...], dict[tuple[int, ...], list[Any]]] = {}
         columns: dict[tuple[Dimension, ...], list[str]] = {}
 
         for key in self._data:
@@ -100,14 +100,14 @@ class Register(Generic[K]):
             dataframe_columns: list[str] = [
                 d.name_cn if display_cn else d.name for d in dimension
             ] + columns[dimension]
-            dataframe_rows: list[list] = []
+            dataframe_rows: list[list[Any]] = []
             for index in rows[dimension]:
                 dataframe_rows.append([i for i in index] + rows[dimension][index])
             frames[dimension] = pd.DataFrame(dataframe_rows, columns=dataframe_columns)
 
         return frames
 
-    def validate(self, dim: DimensionAsKey, raise_errors: bool = False):
+    def validate(self, dim: DimensionAsKey, raise_errors: bool = False) -> None:
         for key in self._data:
             for dimension in self._data[key]:
                 for index in self._data[key][dimension]:
@@ -128,10 +128,11 @@ class Register(Generic[K]):
 
                     elif get_origin(key.vtype) in [list, set, tuple]:
                         # value -> iterable
-                        if not isinstance(value, get_origin(key.vtype)):
+                        origin = get_origin(key.vtype)
+                        if origin is not None and not isinstance(value, origin):
                             msg = (
                                 f"[v{key.id}] {key}{dimension}{index}: "
-                                f"expected {get_origin(key.vtype)}, got {type(value)}, value={value}"
+                                f"expected {origin}, got {type(value)}, value={value}"
                             )
                             if raise_errors:
                                 raise ValidationError(msg)

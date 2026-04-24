@@ -24,6 +24,12 @@ target-version = "py311"
 [tool.mypy]
 python_version = "3.11"
 strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "pandas"
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core"]
