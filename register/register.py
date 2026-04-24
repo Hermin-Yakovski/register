@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Any, Generator, Generic, Iterator, TypeVar
 
+import pandas as pd
+
 from .dimension import Dimension
 from .parameter import Parameter
 
@@ -69,3 +71,34 @@ class Register(Generic[K]):
                 yield index
             elif all(self.ALL == j or i == j for i, j in zip(index, target)):
                 yield index
+
+    def as_frames(self, display_cn: bool = False) -> dict[tuple[Dimension, ...], pd.DataFrame]:
+        frames: dict[tuple[Dimension, ...], pd.DataFrame] = {}
+        rows: dict[tuple[Dimension, ...], dict[tuple[int, ...], list]] = {}
+        columns: dict[tuple[Dimension, ...], list[str]] = {}
+
+        for key in self._data:
+            col: str = key.name_cn if display_cn else key.name
+            for dimension in self._data[key]:
+                if dimension not in rows:
+                    rows[dimension] = {}
+                    columns[dimension] = []
+                if col not in columns[dimension]:
+                    for index in rows[dimension]:
+                        rows[dimension][index].append(None)
+                    columns[dimension].append(col)
+                for index, value in self._data[key][dimension].items():
+                    if index not in rows[dimension]:
+                        rows[dimension][index] = [None for _ in columns[dimension]]
+                    rows[dimension][index][-1] = value
+
+        for dimension in columns:
+            dataframe_columns: list[str] = [
+                d.name_cn if display_cn else d.name for d in dimension
+            ] + columns[dimension]
+            dataframe_rows: list[list] = []
+            for index in rows[dimension]:
+                dataframe_rows.append([i for i in index] + rows[dimension][index])
+            frames[dimension] = pd.DataFrame(dataframe_rows, columns=dataframe_columns)
+
+        return frames

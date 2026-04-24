@@ -159,3 +159,82 @@ def test_select_with_multiple_dimensions():
     reg[Id][(dim1, dim2)][(2, 10)] = "c"
     result = list(reg.select(Id, (dim1, dim2), (1, 10)))
     assert result == [(1, 10)]
+
+def test_as_frames_empty_register():
+    from register.register import Register
+    reg = Register()
+    frames = reg.as_frames()
+    assert frames == {}
+
+def test_as_frames_single_value():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    reg[Id][(dim,)][(1,)] = 42
+    frames = reg.as_frames()
+    assert len(frames) == 1
+    df = frames[(dim,)]
+    assert df.iloc[0]["id"] == 42  # Parameter value is in "id" column
+
+def test_as_frames_multiple_parameters():
+    from register.register import Register
+    from register.parameter import Id, Name
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    reg[Id][(dim,)][(1,)] = 42
+    reg[Name][(dim,)][(1,)] = "test_name"
+    frames = reg.as_frames()
+    df = frames[(dim,)]
+    assert df.iloc[0]["id"] == 42
+    assert df.iloc[0]["name"] == "test_name"
+
+def test_as_frames_display_cn():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    reg[Id][(dim,)][(1,)] = 42
+    frames = reg.as_frames(display_cn=True)
+    df = frames[(dim,)]
+    assert "测试" in df.columns
+    assert df.iloc[0]["ID"] == 42
+
+def test_as_frames_multiple_dimensions():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+    reg[Id][(dim1, dim2)][(1, 10)] = 42
+    frames = reg.as_frames()
+    df = frames[(dim1, dim2)]
+    assert df.iloc[0]["test1"] == 1
+    assert df.iloc[0]["test2"] == 10
+    assert df.iloc[0]["id"] == 42
+
+def test_as_frames_multiple_dimension_keys_for_same_parameter():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+    # Same parameter (Id) with different dimension combinations
+    reg[Id][(dim1,)][(1,)] = 100
+    reg[Id][(dim2,)][(2,)] = 200
+    frames = reg.as_frames()
+    # Should have two separate frames
+    assert len(frames) == 2
+    # Check first frame
+    df1 = frames[(dim1,)]
+    assert df1.iloc[0]["test1"] == 1
+    assert df1.iloc[0]["id"] == 100
+    # Check second frame
+    df2 = frames[(dim2,)]
+    assert df2.iloc[0]["test2"] == 2
+    assert df2.iloc[0]["id"] == 200
