@@ -1,6 +1,7 @@
 from collections import defaultdict
-from typing import Any, Generic, Iterator, TypeVar
+from typing import Any, Generator, Generic, Iterator, TypeVar
 
+from .dimension import Dimension
 from .parameter import Parameter
 
 K = TypeVar('K', bound=Parameter)
@@ -56,3 +57,15 @@ class Register(Generic[K]):
 
     def __contains__(self, key: K) -> bool:
         return key in self._data
+
+    def select(
+        self,
+        key: K,
+        dimension: tuple[Dimension, ...],
+        target: tuple[int, ...] | None = None,
+    ) -> Generator[tuple[int, ...], None, None]:
+        for index in self._data[key][dimension]:
+            if target is None:
+                yield index
+            elif all(self.ALL == j or i == j for i, j in zip(index, target)):
+                yield index

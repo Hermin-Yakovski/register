@@ -110,3 +110,52 @@ def test_register_store_and_retrieve_value():
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = 42
     assert reg[Id][(dim,)][(1,)] == 42
+
+def test_select_returns_all_indices_when_target_none():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    reg[Id][(dim,)][(1,)] = "a"
+    reg[Id][(dim,)][(2,)] = "b"
+    reg[Id][(dim,)][(3,)] = "c"
+    result = list(reg.select(Id, (dim,)))
+    assert result == [(1,), (2,), (3,)]
+
+def test_select_filters_by_exact_match():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    reg[Id][(dim,)][(1,)] = "a"
+    reg[Id][(dim,)][(2,)] = "b"
+    result = list(reg.select(Id, (dim,), (1,)))
+    assert result == [(1,)]
+
+def test_select_filters_with_all_method():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+    reg[Id][(dim1, dim2)][(1, 10)] = "a"
+    reg[Id][(dim1, dim2)][(1, 20)] = "b"
+    reg[Id][(dim1, dim2)][(2, 10)] = "c"
+    result = list(reg.select(Id, (dim1, dim2), (Register.ALL, 10)))
+    assert result == [(1, 10), (2, 10)]
+
+def test_select_with_multiple_dimensions():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+    reg[Id][(dim1, dim2)][(1, 10)] = "a"
+    reg[Id][(dim1, dim2)][(1, 20)] = "b"
+    reg[Id][(dim1, dim2)][(2, 10)] = "c"
+    result = list(reg.select(Id, (dim1, dim2), (1, 10)))
+    assert result == [(1, 10)]
