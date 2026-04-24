@@ -79,3 +79,34 @@ def test_dimension_as_key_pop_nonexistent_returns_empty():
     dak = DimensionAsKey()
     result = dak.pop(("nonexistent",))
     assert result == {}
+
+def test_register_getitem_returns_dimension_as_key():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Id
+    reg = Register()
+    result = reg[Id]
+    assert isinstance(result, DimensionAsKey)
+
+def test_register_iteration_yields_parameters():
+    from register.register import Register
+    from register.parameter import Id
+    reg = Register()
+    _ = reg[Id]
+    assert Id in iter(reg)
+
+def test_register_contains():
+    from register.register import Register
+    from register.parameter import Id, Code
+    reg = Register()
+    _ = reg[Id]
+    assert Id in reg
+    assert Code not in reg
+
+def test_register_store_and_retrieve_value():
+    from register.register import Register
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    reg[Id][(dim,)][(1,)] = 42
+    assert reg[Id][(dim,)][(1,)] == 42

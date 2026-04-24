@@ -1,5 +1,9 @@
 from collections import defaultdict
-from typing import Any
+from typing import Any, Generic, Iterator, TypeVar
+
+from .parameter import Parameter
+
+K = TypeVar('K', bound=Parameter)
 
 
 class Method(int):
@@ -33,9 +37,22 @@ class DimensionAsKey:
         return self._data.pop(key, {})
 
 
-class Register:
+class Register(Generic[K]):
     ALL: Method = Method(0)
     SUM: Method = Method(1)
     MAX: Method = Method(2)
     MIN: Method = Method(3)
     RANGE: Method = Method(4)
+    _data: dict[K, DimensionAsKey]
+
+    def __init__(self):
+        self._data = defaultdict(DimensionAsKey)
+
+    def __getitem__(self, key: K) -> DimensionAsKey:
+        return self._data[key]
+
+    def __iter__(self) -> Iterator[K]:
+        return iter(self._data)
+
+    def __contains__(self, key: K) -> bool:
+        return key in self._data
