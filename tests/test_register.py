@@ -382,3 +382,262 @@ def test_validate_with_invalid_list_element_type():
     reg[param][(dim,)][(1,)] = [1, "not_int", 3]
     with pytest.raises(ValidationError):
         reg.validate(dim_registry, raise_errors=True)
+
+
+def test_validate_with_invalid_container_type_not_list():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import ValidationError
+
+    reg = Register()
+    param = Parameter(100, "list_param", "列表参数", list[int])
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None
+    reg[param][(dim,)][(1,)] = "not_a_list"  # String instead of list
+    with pytest.raises(ValidationError, match="expected <class 'list'>"):
+        reg.validate(dim_registry, raise_errors=True)
+
+
+def test_validate_with_invalid_container_type_not_set():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import ValidationError
+
+    reg = Register()
+    param = Parameter(100, "set_param", "集合参数", set[int])
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None
+    reg[param][(dim,)][(1,)] = [1, 2, 3]  # List instead of set
+    with pytest.raises(ValidationError, match="expected <class 'set'>"):
+        reg.validate(dim_registry, raise_errors=True)
+
+
+def test_validate_with_invalid_container_type_not_tuple():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import ValidationError
+
+    reg = Register()
+    param = Parameter(100, "tuple_param", "元组参数", tuple[int])
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None
+    reg[param][(dim,)][(1,)] = {1, 2, 3}  # Set instead of tuple
+    with pytest.raises(ValidationError, match="expected <class 'tuple'>"):
+        reg.validate(dim_registry, raise_errors=True)
+
+
+def test_validate_with_list_of_dimension_valid():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+
+    reg = Register()
+    # Define a dimension to be used as the element type
+    region_dim = Dimension("region", "地区", "REG")
+    # Create a Parameter with vtype=list[region_dim] (list of that dimension)
+    param = Parameter(100, "regions_param", "地区参数", list[region_dim])
+
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+
+    # Register index 1 for dim, and indices 1, 2, 3 for region_dim
+    dim_registry[(dim,)][(1,)] = None
+    dim_registry[(region_dim,)][(1,)] = None
+    dim_registry[(region_dim,)][(2,)] = None
+    dim_registry[(region_dim,)][(3,)] = None
+
+    # Store a list of valid indices - should not raise
+    reg[param][(dim,)][(1,)] = [1, 2, 3]
+    reg.validate(dim_registry, raise_errors=True)  # Should not raise
+
+
+def test_validate_with_list_of_dimension_invalid_element():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import ValidationError
+
+    reg = Register()
+    # Define a dimension to be used as the element type
+    region_dim = Dimension("region", "地区", "REG")
+    # Create a Parameter with vtype=list[region_dim] (list of that dimension)
+    param = Parameter(100, "regions_param", "地区参数", list[region_dim])
+
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+
+    # Register index 1 for dim, and indices 1, 2, 3 for region_dim
+    dim_registry[(dim,)][(1,)] = None
+    dim_registry[(region_dim,)][(1,)] = None
+    dim_registry[(region_dim,)][(2,)] = None
+    dim_registry[(region_dim,)][(3,)] = None
+
+    # Store a list with an invalid index (5) - should raise ValidationError
+    reg[param][(dim,)][(1,)] = [1, 2, 5]
+    with pytest.raises(ValidationError, match="value 5 does not match any index of dimension region"):
+        reg.validate(dim_registry, raise_errors=True)
+
+
+def test_validate_with_dimension_type():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+
+    reg = Register()
+    # Define dim2 as the dimension type for the parameter
+    dim2 = Dimension("test2", "测试2", "TS2")
+    param = Parameter(100, "dim_param", "维度参数", dim2)
+
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+
+    # Register index 1 as valid for dim, and index 3 as valid for dim2
+    dim_registry[(dim,)][(1,)] = None
+    dim_registry[(dim2,)][(3,)] = None
+
+    # Store 3 as value - should be valid since it's registered in dim2
+    reg[param][(dim,)][(1,)] = 3
+    reg.validate(dim_registry, raise_errors=True)  # Should not raise
+
+
+def test_validate_with_invalid_dimension_value():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import ValidationError
+
+    reg = Register()
+    # Define dim2 as the dimension type for the parameter
+    dim2 = Dimension("test2", "测试2", "TS2")
+    param = Parameter(100, "dim_param", "维度参数", dim2)
+
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+
+    # Register index 1 as valid for dim, and index 3 as valid for dim2
+    dim_registry[(dim,)][(1,)] = None
+    dim_registry[(dim2,)][(3,)] = None
+
+    # Store 5 as value - should fail since 5 is not registered
+    reg[param][(dim,)][(1,)] = 5
+    with pytest.raises(ValidationError):
+        reg.validate(dim_registry, raise_errors=True)
+
+
+def test_validate_with_invalid_dimension_value_logs_warning():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+
+    reg = Register()
+    # Define dim2 as the dimension type for the parameter
+    dim2 = Dimension("test2", "测试2", "TS2")
+    param = Parameter(100, "dim_param", "维度参数", dim2)
+
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+
+    # Register index 1 as valid for dim, and index 3 as valid for dim2
+    dim_registry[(dim,)][(1,)] = None
+    dim_registry[(dim2,)][(3,)] = None
+
+    # Store 5 as value - should log warning but not raise
+    reg[param][(dim,)][(1,)] = 5
+    reg.validate(dim_registry, raise_errors=False)  # Should log warning only
+
+
+def test_validate_with_valid_index_per_dimension():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from typing import Any
+
+    reg = Register()
+    # Define dim1 and dim2
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+
+    # Create parameter with Any type for testing
+    param = Parameter(100, "test_param", "测试参数", Any)
+
+    # Create dimension registry and register indices 1, 2, 3 for each dimension
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim1,)][(1,)] = None
+    dim_registry[(dim1,)][(2,)] = None
+    dim_registry[(dim1,)][(3,)] = None
+    dim_registry[(dim2,)][(1,)] = None
+    dim_registry[(dim2,)][(2,)] = None
+    dim_registry[(dim2,)][(3,)] = None
+
+    # Store values with valid indices - should not raise exceptions
+    reg[param][(dim1, dim2)][(1, 1)] = None
+    reg[param][(dim1, dim2)][(3, 3)] = None
+    reg.validate(dim_registry, raise_errors=True)  # Should not raise
+
+
+def test_validate_with_invalid_index_per_dimension():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import DimensionError
+    from typing import Any
+
+    reg = Register()
+    # Define dim1 and dim2
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+
+    # Create parameter with Any type for testing
+    param = Parameter(100, "test_param", "测试参数", Any)
+
+    # Create dimension registry and register indices 1, 2, 3 for each dimension
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim1,)][(1,)] = None
+    dim_registry[(dim1,)][(2,)] = None
+    dim_registry[(dim1,)][(3,)] = None
+    dim_registry[(dim2,)][(1,)] = None
+    dim_registry[(dim2,)][(2,)] = None
+    dim_registry[(dim2,)][(3,)] = None
+
+    # Store value with invalid index (4) - should raise DimensionError
+    reg[param][(dim1, dim2)][(1, 4)] = None
+    with pytest.raises(DimensionError, match="index 4 does not match any index"):
+        reg.validate(dim_registry, raise_errors=True)
+
+
+def test_validate_with_mismatch_length_index_per_dimension():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import DimensionError
+    from typing import Any
+
+    reg = Register()
+    # Define dim1 and dim2
+    dim1 = Dimension("test1", "测试1", "T1")
+    dim2 = Dimension("test2", "测试2", "T2")
+
+    # Create parameter with Any type for testing
+    param = Parameter(100, "test_param", "测试参数", Any)
+
+    # Create dimension registry and register indices
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim1,)][(1,)] = None
+    dim_registry[(dim1,)][(2,)] = None
+    dim_registry[(dim1,)][(3,)] = None
+    dim_registry[(dim2,)][(1,)] = None
+    dim_registry[(dim2,)][(2,)] = None
+    dim_registry[(dim2,)][(3,)] = None
+
+    # Store value with mismatched index length - (1,) for (dim1, dim2)
+    reg[param][(dim1, dim2)][(1,)] = None
+    # Note: Current implementation uses zip() which silently handles length mismatch
+    # This test may need adjustment based on actual implementation behavior
+    with pytest.raises(DimensionError):
+        reg.validate(dim_registry, raise_errors=True)

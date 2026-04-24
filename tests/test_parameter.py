@@ -30,6 +30,8 @@ def test_parameter_repr_returns_name():
 
     param = Parameter(1, "test", "测试")
     assert repr(param) == "test"
+    # Explicitly call __repr__ to ensure line 22 coverage
+    assert param.__repr__() == "test"
 
 
 def test_parameter_hashable():
@@ -48,6 +50,12 @@ def test_parameter_equality():
     param3 = Parameter(2, "other", "其他")
     assert param1 == param2
     assert param1 != param3
+    # Explicitly call __eq__ to ensure line 28 coverage
+    assert param1.__eq__(param2) is True
+    assert param1.__eq__(param3) is False
+    # Test with non-Parameter to cover the isinstance check
+    assert param1.__eq__("not a parameter") is False
+    assert param1.__eq__(None) is False
 
 
 def test_parameter_equality_based_on_id():

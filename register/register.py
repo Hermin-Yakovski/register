@@ -111,6 +111,17 @@ class Register(Generic[K]):
         for key in self._data:
             for dimension in self._data[key]:
                 for index in self._data[key][dimension]:
+                    # Validate index length matches dimension length
+                    if len(dimension) != len(index):
+                        msg = (
+                            f"[v{key.id}] {key}{dimension}{index}: "
+                            f"dimension length {len(dimension)} does not match index length {len(index)}"
+                        )
+                        if raise_errors:
+                            raise DimensionError(msg)
+                        logger.warning(msg)
+                        continue
+
                     # Validate index
                     for d, ix in zip(dimension, index):
                         if not ((ix,) in dim[d,] or isinstance(ix, Method) or d == Index):
