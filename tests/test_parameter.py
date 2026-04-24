@@ -6,12 +6,12 @@ def test_parameter_creation():
     assert param.id == 1
     assert param.name == "test"
     assert param.name_cn == "测试"
-    assert param.vtype == int
+    assert param.vtype is int
 
 def test_parameter_default_vtype_is_any():
     from register.parameter import Parameter
     param = Parameter(1, "test", "测试")
-    assert param.vtype == Any
+    assert param.vtype is Any
 
 def test_parameter_str_returns_name():
     from register.parameter import Parameter
@@ -48,24 +48,24 @@ def test_id_parameter_exists():
     assert Id.id == 1
     assert Id.name == "id"
     assert Id.name_cn == "ID"
-    assert Id.vtype == int
+    assert Id.vtype is int
 
 def test_code_parameter_exists():
     from register.parameter import Code
     assert Code.id == 2
     assert Code.name == "code"
     assert Code.name_cn == "编码"
-    assert Code.vtype == str
+    assert Code.vtype is str
 
 def test_name_parameter_exists():
     from register.parameter import Name
     assert Name.id == 3
     assert Name.name == "name"
     assert Name.name_cn == "名称"
-    assert Name.vtype == str
+    assert Name.vtype is str
 
 def test_parameter_implements_has_vtype_protocol():
     from register.parameter import Parameter
     param = Parameter(1, "test", "测试", int)
     assert hasattr(param, "vtype")
-    assert param.vtype == int
+    assert param.vtype is int
