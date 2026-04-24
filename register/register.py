@@ -8,9 +8,9 @@ from .dimension import Dimension, Index
 from .exception import DimensionError, ValidationError
 from .parameter import Parameter
 
-K = TypeVar('K', bound=Parameter)
+K = TypeVar("K", bound=Parameter)
 
-logger = logging.getLogger('register')
+logger = logging.getLogger("register")
 
 
 class Method(int):
@@ -82,7 +82,7 @@ class Register(Generic[K]):
         columns: dict[tuple[Dimension, ...], list[str]] = {}
 
         for key in self._data:
-            col: str = (key.name_cn if display_cn else key.name)  # type: ignore[assignment]
+            col: str = key.name_cn if display_cn else key.name
             for dimension in self._data[key]:
                 if dimension not in rows:
                     rows[dimension] = {}

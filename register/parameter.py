@@ -41,6 +41,6 @@ class Parameter:
 
 
 # Common parameters used across all services
-Id = Parameter(1, 'id', 'ID', int)
-Code = Parameter(2, 'code', '编码', str)
-Name = Parameter(3, 'name', '名称', str)
+Id = Parameter(1, "id", "ID", int)
+Code = Parameter(2, "code", "编码", str)
+Name = Parameter(3, "name", "名称", str)

@@ -33,5 +33,5 @@ class Dimension:
         return self._sign
 
 
-Index = Dimension('Index', '下标', 'IX')
-Metric = Dimension('Metric', '指标汇总', 'MTC')
+Index = Dimension("Index", "下标", "IX")
+Metric = Dimension("Metric", "指标汇总", "MTC")

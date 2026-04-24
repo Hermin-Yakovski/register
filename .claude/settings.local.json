@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(poetry run *)",
+      "Bash(ruff check *)"
+    ]
+  }
+}
