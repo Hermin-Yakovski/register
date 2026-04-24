@@ -82,7 +82,7 @@ class Register(Generic[K]):
         columns: dict[tuple[Dimension, ...], list[str]] = {}
 
         for key in self._data:
-            col: str = key.name_cn if display_cn else key.name
+            col: str = (key.name_cn if display_cn else key.name)  # type: ignore[assignment]
             for dimension in self._data[key]:
                 if dimension not in rows:
                     rows[dimension] = {}

@@ -17,10 +17,10 @@ def sample_register():
     region = Dimension("region", "地区", "REG")
     product = Dimension("product", "产品", "PRD")
 
-    reg[Id][(region, product)][("Beijing", "Widget")] = 1
-    reg[Id][(region, product)][("Beijing", "Gadget")] = 2
-    reg[Id][(region, product)][("Shanghai", "Widget")] = 3
-    reg[Id][(region, product)][("Shanghai", "Gadget")] = 4
+    reg[Id][(region, product)][(1, 1)] = 1
+    reg[Id][(region, product)][(1, 2)] = 2
+    reg[Id][(region, product)][(2, 1)] = 3
+    reg[Id][(region, product)][(2, 2)] = 4
 
     return reg
 
@@ -39,16 +39,5 @@ def sample_parameter():
 
 @pytest.fixture
 def price_parameter():
-    """Price Parameter with float type."""
+    """Price Parameter with a float type."""
     return Parameter(4, "price", "价格", float)
-
-
-@pytest.fixture
-def region_dimension():
-    """Region Dimension with pre-filled indices."""
-    dim = Dimension("region", "地区", "REG")
-    reg = Register()
-    # Register some indices
-    reg._data[dim][(Index,)][("Beijing",)] = None
-    reg._data[dim][(Index,)][("Shanghai",)] = None
-    return dim, reg
