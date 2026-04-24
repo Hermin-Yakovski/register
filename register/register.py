@@ -1,12 +1,16 @@
+import logging
 from collections import defaultdict
-from typing import Any, Generator, Generic, Iterator, TypeVar
+from typing import Any, Generator, Generic, Iterator, TypeVar, get_args, get_origin
 
 import pandas as pd
 
-from .dimension import Dimension
+from .dimension import Dimension, Index
+from .exception import DimensionError, ValidationError
 from .parameter import Parameter
 
 K = TypeVar('K', bound=Parameter)
+
+logger = logging.getLogger('register')
 
 
 class Method(int):
@@ -102,3 +106,76 @@ class Register(Generic[K]):
             frames[dimension] = pd.DataFrame(dataframe_rows, columns=dataframe_columns)
 
         return frames
+
+    def validate(self, dim: DimensionAsKey, raise_errors: bool = False):
+        for key in self._data:
+            for dimension in self._data[key]:
+                for index in self._data[key][dimension]:
+                    # Validate index
+                    for d, ix in zip(dimension, index):
+                        if not ((ix,) in dim[d,] or isinstance(ix, Method) or d == Index):
+                            msg = (
+                                f"[v{key.id}] {key}{dimension}{index}: "
+                                f"index {ix} does not match any index of dimension {d.name}"
+                            )
+                            if raise_errors:
+                                raise DimensionError(msg)
+                            logger.warning(msg)
+
+                    value = self._data[key][dimension][index]
+                    if key.vtype is Any:
+                        pass
+
+                    elif get_origin(key.vtype) in [list, set, tuple]:
+                        # value -> iterable
+                        if not isinstance(value, get_origin(key.vtype)):
+                            msg = (
+                                f"[v{key.id}] {key}{dimension}{index}: "
+                                f"expected {get_origin(key.vtype)}, got {type(value)}, value={value}"
+                            )
+                            if raise_errors:
+                                raise ValidationError(msg)
+                            logger.warning(msg)
+
+                        arg = get_args(key.vtype)[0]
+                        if get_args(arg):
+                            arg = get_args(arg)[0]
+
+                        for v in value:
+                            if isinstance(arg, Dimension):
+                                if (v,) not in dim[arg,]:
+                                    msg = (
+                                        f"[v{key.id}] {key}{dimension}{index}: "
+                                        f"value {v} does not match any index of dimension {arg.name}"
+                                    )
+                                    if raise_errors:
+                                        raise ValidationError(msg)
+                                    logger.warning(msg)
+                            elif not isinstance(v, arg):
+                                msg = (
+                                    f"[v{key.id}] {key}{dimension}{index}: "
+                                    f"{get_origin(key.vtype)} expected elements of {arg}, "
+                                    f"got {type(v)}, value={v}"
+                                )
+                                if raise_errors:
+                                    raise ValidationError(msg)
+                                logger.warning(msg)
+
+                    elif isinstance(key.vtype, Dimension):
+                        if (value,) not in dim[key.vtype,]:
+                            msg = (
+                                f"[v{key.id}] {key}{dimension}{index}: "
+                                f"value {value} does not match any index of dimension {key.vtype.name}"
+                            )
+                            if raise_errors:
+                                raise ValidationError(msg)
+                            logger.warning(msg)
+
+                    elif not isinstance(value, key.vtype):
+                        msg = (
+                            f"[v{key.id}] {key}{dimension}{index}: "
+                            f"expected {key.vtype}, got {type(value)}, value={value}"
+                        )
+                        if raise_errors:
+                            raise ValidationError(msg)
+                        logger.warning(msg)

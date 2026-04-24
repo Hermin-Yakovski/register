@@ -238,3 +238,81 @@ def test_as_frames_multiple_dimension_keys_for_same_parameter():
     df2 = frames[(dim2,)]
     assert df2.iloc[0]["test2"] == 2
     assert df2.iloc[0]["id"] == 200
+
+def test_validate_with_valid_data_no_errors():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
+    reg[Id][(dim,)][(1,)] = 42
+    # Should not raise
+    reg.validate(dim_registry)
+
+def test_validate_with_invalid_type_logs_warning():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Id
+    from register.dimension import Dimension
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
+    reg[Id][(dim,)][(1,)] = "not_an_int"  # Wrong type
+    # Should log warning but not raise
+    reg.validate(dim_registry, raise_errors=False)
+
+def test_validate_with_invalid_type_raises_error():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Id
+    from register.dimension import Dimension
+    from register.exception import ValidationError
+    reg = Register()
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
+    reg[Id][(dim,)][(1,)] = "not_an_int"
+    import pytest
+    with pytest.raises(ValidationError):
+        reg.validate(dim_registry, raise_errors=True)
+
+def test_validate_with_any_type_accepts_anything():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from typing import Any
+    reg = Register()
+    param = Parameter(100, "any_param", "任意参数", Any)
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
+    reg[param][(dim,)][(1,)] = "anything"
+    reg.validate(dim_registry, raise_errors=True)  # Should not raise
+
+def test_validate_with_list_type():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    reg = Register()
+    param = Parameter(100, "list_param", "列表参数", list[int])
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
+    reg[param][(dim,)][(1,)] = [1, 2, 3]
+    reg.validate(dim_registry, raise_errors=True)  # Should not raise
+
+def test_validate_with_invalid_list_element_type():
+    from register.register import Register, DimensionAsKey
+    from register.parameter import Parameter
+    from register.dimension import Dimension
+    from register.exception import ValidationError
+    reg = Register()
+    param = Parameter(100, "list_param", "列表参数", list[int])
+    dim = Dimension("test", "测试", "TST")
+    dim_registry = DimensionAsKey()
+    dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
+    reg[param][(dim,)][(1,)] = [1, "not_int", 3]
+    import pytest
+    with pytest.raises(ValidationError):
+        reg.validate(dim_registry, raise_errors=True)
