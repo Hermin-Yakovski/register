@@ -104,13 +104,13 @@ The `validate()` method accepts a `raise_errors: bool = False` parameter:
 
 **Runtime:**
 - Python >=3.11
-- pandas
+- pandas ^2.0
 
 **Development:**
-- pytest
-- ruff
-- mypy
-- pandas-stubs
+- pytest ^8.0
+- ruff ^0.8
+- mypy ^1.10
+- pandas-stubs ^2.0
 
 ### Tool Configuration
 
