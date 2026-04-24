@@ -1,4 +1,3 @@
-import pytest
 from typing import Any
 
 def test_parameter_creation():
@@ -52,7 +51,7 @@ def test_id_parameter_exists():
     assert Id.vtype == int
 
 def test_code_parameter_exists():
-    from register.parameter import Code, Any
+    from register.parameter import Code
     assert Code.id == 2
     assert Code.name == "code"
     assert Code.name_cn == "编码"

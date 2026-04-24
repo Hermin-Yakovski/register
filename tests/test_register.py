@@ -273,7 +273,6 @@ def test_validate_with_invalid_type_raises_error():
     dim_registry = DimensionAsKey()
     dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
     reg[Id][(dim,)][(1,)] = "not_an_int"
-    import pytest
     with pytest.raises(ValidationError):
         reg.validate(dim_registry, raise_errors=True)
 
@@ -313,6 +312,5 @@ def test_validate_with_invalid_list_element_type():
     dim_registry = DimensionAsKey()
     dim_registry[(dim,)][(1,)] = None  # Register index 1 as valid
     reg[param][(dim,)][(1,)] = [1, "not_int", 3]
-    import pytest
     with pytest.raises(ValidationError):
         reg.validate(dim_registry, raise_errors=True)

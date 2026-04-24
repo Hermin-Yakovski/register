@@ -1,7 +1,7 @@
 import pytest
 from register import Register, Parameter, Dimension
-from register.dimension import Index, Metric
-from register.parameter import Id, Code, Name
+from register.dimension import Index
+from register.parameter import Id
 
 
 @pytest.fixture

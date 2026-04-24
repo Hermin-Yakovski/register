@@ -1,4 +1,3 @@
-import pytest
 
 def test_dimension_creation():
     from register.dimension import Dimension
