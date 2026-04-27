@@ -5,6 +5,7 @@ description = "Multi-dimensional data registry with validation and pandas export
 authors = ["yehemin <yehemin@example.com>"]
 readme = "README.md"
 packages = [{include = "register"}]
+include = ["register/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
