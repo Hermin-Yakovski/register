@@ -34,4 +34,4 @@ class Dimension:
 
 
 Index = Dimension("Index", "下标", "IX")
-Metric = Dimension("Metric", "指标汇总", "MTC")
+Metric = Dimension("Metric", "汇总方式", "MTC")

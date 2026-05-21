@@ -59,7 +59,7 @@ def test_metric_dimension_exists():
     from register.dimension import Metric
 
     assert Metric.name == "Metric"
-    assert Metric.name_cn == "指标汇总"
+    assert Metric.name_cn == "汇总方式"
     assert Metric.sign == "MTC"
 
 
