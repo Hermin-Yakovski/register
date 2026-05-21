@@ -5,7 +5,7 @@ from typing import Any, Generator, Generic, Iterator, TypeVar, get_args, get_ori
 import pandas as pd
 
 from .dimension import Dimension, Index
-from .exception import DimensionError, ValidationError
+from .exception import RegisterError, DimensionError, ValidationError
 from .parameter import Parameter
 
 K = TypeVar("K", bound=Parameter)
