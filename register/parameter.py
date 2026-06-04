@@ -2,14 +2,13 @@ from typing import Any, TypeVar
 
 K = TypeVar("K")
 
-
 class Parameter:
     _id: int
     _name: str
     _name_cn: str
-    vtype: type
+    vtype: Any
 
-    def __init__(self, id: int, name: str, name_cn: str, vtype: type = Any) -> None:
+    def __init__(self, id: int, name: str, name_cn: str, vtype: Any = None) -> None:
         self._id = id
         self._name = name
         self._name_cn = name_cn

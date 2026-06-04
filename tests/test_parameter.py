@@ -1,4 +1,3 @@
-from typing import Any
 
 
 def test_parameter_creation():
@@ -11,11 +10,11 @@ def test_parameter_creation():
     assert param.vtype is int
 
 
-def test_parameter_default_vtype_is_any():
+def test_parameter_default_vtype_is_none():
     from register.parameter import Parameter
 
     param = Parameter(1, "test", "测试")
-    assert param.vtype is Any
+    assert param.vtype is None
 
 
 def test_parameter_str_returns_name():

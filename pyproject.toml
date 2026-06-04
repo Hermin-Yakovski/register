@@ -23,6 +23,7 @@ line-length = 100
 target-version = "py311"
 
 [tool.mypy]
+exclude = ["tests/"]
 python_version = "3.11"
 strict = true
 warn_return_any = true

@@ -5,7 +5,7 @@ from typing import Any, Generator, Generic, Iterator, TypeVar, get_args, get_ori
 import pandas as pd
 
 from .dimension import Dimension, Index
-from .exception import RegisterError, DimensionError, ValidationError
+from .exception import DimensionError, ValidationError
 from .parameter import Parameter
 
 K = TypeVar("K", bound=Parameter)
@@ -134,7 +134,7 @@ class Register(Generic[K]):
                             logger.warning(msg)
 
                     value = self._data[key][dimension][index]
-                    if key.vtype is Any:
+                    if key.vtype is None or key.vtype == Any:
                         pass
 
                     elif get_origin(key.vtype) in [list, set, tuple]:
