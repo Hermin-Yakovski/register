@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "register"
 version = "0.1.0"
-description = "Multi-dimensional data registry with validation and pandas export"
+description = "Multi-dimensional data registry"
 authors = ["yehemin <yehemin@example.com>"]
 readme = "README.md"
 packages = [{include = "register"}]
@@ -9,13 +9,11 @@ include = ["register/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pandas = "^2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
 ruff = "^0.8"
 mypy = "^1.10"
-pandas-stubs = "^2.0"
 pytest-cov = "^7.1.0"
 
 [tool.ruff]
@@ -28,11 +26,3 @@ python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-module = "pandas"
-ignore_missing_imports = true
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
