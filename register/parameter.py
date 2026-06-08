@@ -1,6 +1,5 @@
-from typing import Any, TypeVar
+from typing import Any
 
-K = TypeVar("K")
 
 class Parameter:
     _id: int
@@ -43,3 +42,9 @@ class Parameter:
 Id = Parameter(1, "id", "ID", int)
 Code = Parameter(2, "code", "编码", str)
 Name = Parameter(3, "name", "名称", str)
+
+
+__all__ = [
+    'Parameter',
+    'Id', 'Code', 'Name',
+]

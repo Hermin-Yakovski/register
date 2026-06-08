@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
-from typing import Any, Generator, Generic, Iterator, TypeVar
-
+from typing import Generic, TypeVar, TYPE_CHECKING
 
 from .dimension import Dimension
+
+if TYPE_CHECKING:
+    from typing import Any, Generator, Iterator
+
 
 K = TypeVar("K")
 
@@ -72,3 +77,7 @@ class Register(Generic[K]):
                 yield index
             elif all(self.ALL == j or i == j for i, j in zip(index, target)):
                 yield index
+
+__all__ = [
+    'Register',
+]

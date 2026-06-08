@@ -35,3 +35,9 @@ class Dimension:
 
 Index = Dimension("Index", "下标", "IX")
 Metric = Dimension("Metric", "汇总方式", "MTC")
+
+
+__all__ = [
+    'Dimension',
+    'Index', 'Metric',
+]
