@@ -45,6 +45,8 @@ Name = Parameter(3, "name", "名称", str)
 
 
 __all__ = [
-    'Parameter',
-    'Id', 'Code', 'Name',
+    "Parameter",
+    "Id",
+    "Code",
+    "Name",
 ]

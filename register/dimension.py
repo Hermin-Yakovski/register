@@ -38,6 +38,7 @@ Metric = Dimension("Metric", "汇总方式", "MTC")
 
 
 __all__ = [
-    'Dimension',
-    'Index', 'Metric',
+    "Dimension",
+    "Index",
+    "Metric",
 ]

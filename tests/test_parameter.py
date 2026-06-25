@@ -1,5 +1,3 @@
-
-
 def test_parameter_creation():
     from register.parameter import Parameter
 

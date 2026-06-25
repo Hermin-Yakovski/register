@@ -16,6 +16,8 @@ logger = logging.getLogger("register")
 
 
 class Method(int):
+    _NAMES: dict[int, str] = {0: "ALL", 1: "SUM", 2: "MAX", 3: "MIN", 4: "RANGE"}
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Method):
             return False
@@ -29,6 +31,9 @@ class Method(int):
     def __hash__(self) -> int:
         return super().__hash__()
 
+    def __repr__(self) -> str:
+        return self._NAMES.get(int(self), f"Method({int(self)})")
+
 
 class DimensionAsKey:
     _data: dict[tuple[Any, ...], dict[tuple[int, ...], Any]]
@@ -41,6 +46,15 @@ class DimensionAsKey:
 
     def __iter__(self) -> Iterator[tuple[Any, ...]]:
         return iter(self._data)
+
+    def __repr__(self) -> str:
+        if not self._data:
+            return "DimensionAsKey(empty)"
+        parts = []
+        for dim_tuple, idx_dict in self._data.items():
+            dim_names = ",".join(repr(d) for d in dim_tuple)
+            parts.append(f"({dim_names}): {len(idx_dict)}")
+        return f"DimensionAsKey({{{', '.join(parts)}}})"
 
     def pop(self, key: tuple[Any, ...]) -> dict[tuple[int, ...], Any]:
         return self._data.pop(key, {})
@@ -66,6 +80,17 @@ class Register(Generic[K]):
     def __contains__(self, key: K) -> bool:
         return key in self._data
 
+    def __repr__(self) -> str:
+        if not self._data:
+            return "Register(empty)"
+        total_cells = 0
+        param_summaries = []
+        for param, dak in self._data.items():
+            cell_count = sum(len(idx_dict) for idx_dict in dak._data.values())
+            total_cells += cell_count
+            param_summaries.append(f"{param}: {cell_count}")
+        return f"Register(params={len(self._data)}, cells={total_cells}, {{{', '.join(param_summaries)}}})"
+
     def select(
         self,
         key: K,
@@ -78,6 +103,7 @@ class Register(Generic[K]):
             elif all(self.ALL == j or i == j for i, j in zip(index, target)):
                 yield index
 
+
 __all__ = [
-    'Register',
+    "Register",
 ]
