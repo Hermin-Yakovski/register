@@ -30,7 +30,7 @@ register/
 
 - `RegisterKey` (ABC) defines the contract for any class used as a Register key
 - `Parameter` inherits from `RegisterKey`, implements all abstract members
-- `IterParameter` inherits from `RegisterKey`, adds `iter_vtype` and `strict` kwarg
+- `IterParameter` inherits from `RegisterKey`, adds `iter_vtype` for element-wise aggregation
 - `Register[K]` binds K with `bound=RegisterKey` so type-checkers enforce the constraint
 - `Method` enum gains `MEAN = Method(5)`
 
@@ -215,17 +215,9 @@ class Parameter(RegisterKey):
 
 `IterParameter` is a sibling of `Parameter` (both inherit from `RegisterKey`). It represents a key whose values are iterables, with an additional `iter_vtype` field describing the container type (defaults to `list`).
 
-### Control Parameters
-
-Aggregation methods accept one kwarg:
-
-| Kwarg | Default | Purpose |
-|-------|---------|---------|
-| `strict` | `False` | Passed to `zip(*args, strict=strict)`. When `True`, raises `ValueError` if input iterables have different lengths. |
-
 ### Element-wise Behavior
 
-All aggregation methods operate element-wise across input iterables using `zip`. Each position across the input iterables is aggregated independently, producing a list of results.
+All aggregation methods operate element-wise across input iterables using `zip(*args, strict=True)`. Each position across the input iterables is aggregated independently, producing a list of results. Input iterables must have the same length — `ValueError` is raised otherwise.
 
 For `sum` with `vtype=str` or `Dimension`: element-wise frequency dicts are returned — `[dict[str, int], ...]`.
 
@@ -273,44 +265,39 @@ class IterParameter(RegisterKey):
         return self._name_cn
 
     def sum(self, *args: Any, **kwargs: Any) -> Any:
-        strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool):
-            return [sum(elements) for elements in zip(*args, strict=strict)]
+            return [sum(elements) for elements in zip(*args, strict=True)]
         elif self.vtype is str or isinstance(self.vtype, Dimension):
             from collections import Counter
-            return [dict(Counter(elements)) for elements in zip(*args, strict=strict)]
+            return [dict(Counter(elements)) for elements in zip(*args, strict=True)]
         raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
     def mean(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("mean requires at least one value")
-        strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool):
-            return [sum(elements) / len(elements) for elements in zip(*args, strict=strict)]
+            return [sum(elements) / len(elements) for elements in zip(*args, strict=True)]
         raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
     def min(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("min requires at least one value")
-        strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool, str):
-            return [min(elements) for elements in zip(*args, strict=strict)]
+            return [min(elements) for elements in zip(*args, strict=True)]
         raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
 
     def max(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("max requires at least one value")
-        strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool, str):
-            return [max(elements) for elements in zip(*args, strict=strict)]
+            return [max(elements) for elements in zip(*args, strict=True)]
         raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
 
     def range(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("range requires at least one value")
-        strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool):
-            return [max(elements) - min(elements) for elements in zip(*args, strict=strict)]
+            return [max(elements) - min(elements) for elements in zip(*args, strict=True)]
         raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
 ```
 
