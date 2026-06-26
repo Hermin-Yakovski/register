@@ -200,3 +200,68 @@ def test_select_with_multiple_dimensions():
     reg[Id][(dim1, dim2)][(2, 10)] = "c"
     result = list(reg.select(Id, (dim1, dim2), (1, 10)))
     assert result == [(1, 10)]
+
+
+# --- __repr__ tests ---
+
+
+def test_method_repr_known():
+    from register.register import Method
+
+    assert repr(Method(0)) == "ALL"
+    assert repr(Method(1)) == "SUM"
+    assert repr(Method(2)) == "MAX"
+    assert repr(Method(3)) == "MIN"
+    assert repr(Method(4)) == "RANGE"
+
+
+def test_method_repr_unknown():
+    from register.register import Method
+
+    assert repr(Method(99)) == "Method(99)"
+
+
+def test_dimension_as_key_repr_empty():
+    from register.register import DimensionAsKey
+
+    dak = DimensionAsKey()
+    assert repr(dak) == "DimensionAsKey(empty)"
+
+
+def test_dimension_as_key_repr_with_data():
+    from register.register import DimensionAsKey
+    from register.dimension import Dimension
+
+    dak = DimensionAsKey()
+    dim = Dimension("Region", "区域", "R")
+    dak[(dim,)][(1,)] = "a"
+    dak[(dim,)][(2,)] = "b"
+    result = repr(dak)
+    assert "Region" in result
+    assert "2" in result
+    assert result.startswith("DimensionAsKey(")
+
+
+def test_register_repr_empty():
+    from register.register import Register
+
+    reg = Register()
+    assert repr(reg) == "Register(empty)"
+
+
+def test_register_repr_with_data():
+    from register.register import Register
+    from register.parameter import Id, Name
+    from register.dimension import Dimension
+
+    reg = Register()
+    dim = Dimension("House", "仓", "W")
+    reg[Id][(dim,)][(1,)] = 1
+    reg[Id][(dim,)][(2,)] = 2
+    reg[Name][(dim,)][(1,)] = "Shanghai"
+
+    result = repr(reg)
+    assert "params=2" in result
+    assert "cells=3" in result
+    assert "id: 2" in result
+    assert "name: 1" in result
