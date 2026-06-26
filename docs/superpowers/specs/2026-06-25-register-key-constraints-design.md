@@ -30,7 +30,7 @@ register/
 
 - `RegisterKey` (ABC) defines the contract for any class used as a Register key
 - `Parameter` inherits from `RegisterKey`, implements all abstract members
-- `IterParameter` inherits from `RegisterKey`, adds `iter_vtype` and `flatten`/`strict` kwargs
+- `IterParameter` inherits from `RegisterKey`, adds `iter_vtype` and `strict` kwarg
 - `Register[K]` binds K with `bound=RegisterKey` so type-checkers enforce the constraint
 - `Method` enum gains `MEAN = Method(5)`
 
@@ -217,16 +217,17 @@ class Parameter(RegisterKey):
 
 ### Control Parameters
 
-Aggregation methods accept two kwargs:
+Aggregation methods accept one kwarg:
 
 | Kwarg | Default | Purpose |
 |-------|---------|---------|
-| `flatten` | `True` | When `True`, collapse all input iterables into one flat sequence and aggregate to a scalar. When `False`, aggregate element-wise across input iterables using `zip`. |
 | `strict` | `False` | Passed to `zip(*args, strict=strict)`. When `True`, raises `ValueError` if input iterables have different lengths. |
 
-### Str/Dimension vtype
+### Element-wise Behavior
 
-For `sum` only: when `vtype` is `str` or a `Dimension` instance, `flatten` is ignored — the method always flattens all iterables and returns a frequency dict `dict[str, int]`.
+All aggregation methods operate element-wise across input iterables using `zip`. Each position across the input iterables is aggregated independently, producing a list of results.
+
+For `sum` with `vtype=str` or `Dimension`: element-wise frequency dicts are returned — `[dict[str, int], ...]`.
 
 ### IterParameter Implementation
 
@@ -270,71 +271,43 @@ class IterParameter(RegisterKey):
         return self._name_cn
 
     def sum(self, *args: Any, **kwargs: Any) -> Any:
-        flatten = kwargs.get("flatten", True)
+        strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool):
-            if flatten:
-                flat = [v for iterable in args for v in iterable]
-                return sum(flat)
-            return [sum(elements) for elements in zip(*args, strict=kwargs.get("strict", False))]
+            return [sum(elements) for elements in zip(*args, strict=strict)]
         elif self.vtype is str or isinstance(self.vtype, Dimension):
             from collections import Counter
-            flat = [v for iterable in args for v in iterable]
-            return dict(Counter(flat))
+            return [dict(Counter(elements)) for elements in zip(*args, strict=strict)]
         raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
     def mean(self, *args: Any, **kwargs: Any) -> Any:
-        flatten = kwargs.get("flatten", True)
+        if not args:
+            raise RegisterError("mean requires at least one value")
         strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool):
-            if flatten:
-                flat = [v for iterable in args for v in iterable]
-                if not flat:
-                    raise RegisterError("mean requires at least one value")
-                return sum(flat) / len(flat)
-            if not args:
-                raise RegisterError("mean requires at least one value")
             return [sum(elements) / len(elements) for elements in zip(*args, strict=strict)]
         raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
     def min(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("min requires at least one value")
-        flatten = kwargs.get("flatten", True)
         strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool, str):
-            if flatten:
-                flat = [v for iterable in args for v in iterable]
-                if not flat:
-                    raise RegisterError("min requires at least one value")
-                return min(flat)
             return [min(elements) for elements in zip(*args, strict=strict)]
         raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
 
     def max(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("max requires at least one value")
-        flatten = kwargs.get("flatten", True)
         strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool, str):
-            if flatten:
-                flat = [v for iterable in args for v in iterable]
-                if not flat:
-                    raise RegisterError("max requires at least one value")
-                return max(flat)
             return [max(elements) for elements in zip(*args, strict=strict)]
         raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
 
     def range(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("range requires at least one value")
-        flatten = kwargs.get("flatten", True)
         strict = kwargs.get("strict", False)
         if self.vtype in (int, float, bool):
-            if flatten:
-                flat = [v for iterable in args for v in iterable]
-                if not flat:
-                    raise RegisterError("range requires at least one value")
-                return max(flat) - min(flat)
             return [max(elements) - min(elements) for elements in zip(*args, strict=strict)]
         raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
 ```
