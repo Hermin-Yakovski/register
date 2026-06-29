@@ -1,5 +1,6 @@
 import pytest
 from register.key import RegisterKey, ParameterKey, PositionKey, IterableKey
+from register.register import DimensionAsKey
 
 
 class TestRegisterKey:
@@ -72,3 +73,177 @@ class TestBaseKeyViaParameterKey:
     def test_isinstance_register_key(self) -> None:
         p = ParameterKey(1, "x", "X", int)
         assert isinstance(p, RegisterKey)
+
+
+class TestParameterKeySum:
+    def _make_key(self, vtype):
+        return ParameterKey(1, "test", "测试", vtype)
+
+    def test_sum_int(self) -> None:
+        k = self._make_key(int)
+        assert k.sum(DimensionAsKey(), 1, 2, 3) == 6
+
+    def test_sum_float(self) -> None:
+        k = self._make_key(float)
+        assert k.sum(DimensionAsKey(), 1.5, 2.5) == 4.0
+
+    def test_sum_bool(self) -> None:
+        k = self._make_key(bool)
+        assert k.sum(DimensionAsKey(), True, False, True) == 2
+
+    def test_sum_int_empty(self) -> None:
+        k = self._make_key(int)
+        assert k.sum(DimensionAsKey()) == 0
+
+    def test_sum_str(self) -> None:
+        k = self._make_key(str)
+        result = k.sum(DimensionAsKey(), "a", "b", "a", "c")
+        assert result == {"a": 2, "b": 1, "c": 1}
+
+    def test_sum_str_empty(self) -> None:
+        k = self._make_key(str)
+        assert k.sum(DimensionAsKey()) == {}
+
+    def test_sum_dimension(self) -> None:
+        from register.dimension import Dimension
+        d1 = Dimension("r1", "区域1", "R1")
+        d2 = Dimension("r2", "区域2", "R2")
+        k = ParameterKey(1, "test", "测试", d1)
+        result = k.sum(DimensionAsKey(), d1, d2, d1)
+        assert result == {d1: 2, d2: 1}
+
+    def test_sum_unsupported_vtype(self) -> None:
+        k = self._make_key(list)
+        with pytest.raises(NotImplementedError):
+            k.sum(DimensionAsKey(), [1], [2])
+
+
+class TestParameterKeyMean:
+    def _make_key(self, vtype):
+        return ParameterKey(1, "test", "测试", vtype)
+
+    def test_mean_int(self) -> None:
+        k = self._make_key(int)
+        assert k.mean(DimensionAsKey(), 2, 4, 6) == 4.0
+
+    def test_mean_float(self) -> None:
+        k = self._make_key(float)
+        assert k.mean(DimensionAsKey(), 1.0, 3.0) == 2.0
+
+    def test_mean_bool(self) -> None:
+        k = self._make_key(bool)
+        assert k.mean(DimensionAsKey(), True, False, True) == pytest.approx(2 / 3)
+
+    def test_mean_empty_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.mean(DimensionAsKey())
+
+    def test_mean_str_not_implemented(self) -> None:
+        k = self._make_key(str)
+        with pytest.raises(NotImplementedError):
+            k.mean(DimensionAsKey(), "a", "b")
+
+
+class TestParameterKeyMin:
+    def _make_key(self, vtype):
+        return ParameterKey(1, "test", "测试", vtype)
+
+    def test_min_int(self) -> None:
+        k = self._make_key(int)
+        assert k.min(DimensionAsKey(), 3, 1, 2) == 1
+
+    def test_min_float(self) -> None:
+        k = self._make_key(float)
+        assert k.min(DimensionAsKey(), 3.5, 1.5, 2.5) == 1.5
+
+    def test_min_bool(self) -> None:
+        k = self._make_key(bool)
+        assert k.min(DimensionAsKey(), True, False, True) is False
+
+    def test_min_str(self) -> None:
+        k = self._make_key(str)
+        assert k.min(DimensionAsKey(), "banana", "apple", "cherry") == "apple"
+
+    def test_min_empty_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.min(DimensionAsKey())
+
+    def test_min_dimension_not_implemented(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = ParameterKey(1, "test", "测试", d)
+        with pytest.raises(NotImplementedError):
+            k.min(DimensionAsKey(), d)
+
+
+class TestParameterKeyMax:
+    def _make_key(self, vtype):
+        return ParameterKey(1, "test", "测试", vtype)
+
+    def test_max_int(self) -> None:
+        k = self._make_key(int)
+        assert k.max(DimensionAsKey(), 3, 1, 2) == 3
+
+    def test_max_float(self) -> None:
+        k = self._make_key(float)
+        assert k.max(DimensionAsKey(), 3.5, 1.5, 2.5) == 3.5
+
+    def test_max_bool(self) -> None:
+        k = self._make_key(bool)
+        assert k.max(DimensionAsKey(), True, False, True) is True
+
+    def test_max_str(self) -> None:
+        k = self._make_key(str)
+        assert k.max(DimensionAsKey(), "banana", "apple", "cherry") == "cherry"
+
+    def test_max_empty_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.max(DimensionAsKey())
+
+    def test_max_dimension_not_implemented(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = ParameterKey(1, "test", "测试", d)
+        with pytest.raises(NotImplementedError):
+            k.max(DimensionAsKey(), d)
+
+
+class TestParameterKeyRange:
+    def _make_key(self, vtype):
+        return ParameterKey(1, "test", "测试", vtype)
+
+    def test_range_int(self) -> None:
+        k = self._make_key(int)
+        assert k.range(DimensionAsKey(), 3, 1, 5) == 4
+
+    def test_range_float(self) -> None:
+        k = self._make_key(float)
+        assert k.range(DimensionAsKey(), 3.5, 1.5, 2.5) == 2.0
+
+    def test_range_bool(self) -> None:
+        k = self._make_key(bool)
+        assert k.range(DimensionAsKey(), True, False) == 1
+
+    def test_range_empty_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.range(DimensionAsKey())
+
+    def test_range_str_not_implemented(self) -> None:
+        k = self._make_key(str)
+        with pytest.raises(NotImplementedError):
+            k.range(DimensionAsKey(), "a", "b")
+
+    def test_range_dimension_not_implemented(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = ParameterKey(1, "test", "测试", d)
+        with pytest.raises(NotImplementedError):
+            k.range(DimensionAsKey(), d)

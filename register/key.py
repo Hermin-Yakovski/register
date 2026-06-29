@@ -3,6 +3,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, TYPE_CHECKING
 
+from .dimension import Dimension
+from .exception import RegisterError
+
+
 if TYPE_CHECKING:
     from .register import DimensionAsKey
 
@@ -83,19 +87,40 @@ class ParameterKey(_BaseKey):
     """Key for scalar values."""
 
     def sum(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if self.vtype in (int, float, bool):
+            return sum(args)
+        elif self.vtype is str or isinstance(self.vtype, Dimension):
+            from collections import Counter
+            return dict(Counter(args))
+        raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
     def mean(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("mean requires at least one value")
+        if self.vtype in (int, float, bool):
+            return sum(args) / len(args)
+        raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
     def min(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("min requires at least one value")
+        if self.vtype in (int, float, bool, str):
+            return min(args)
+        raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
 
     def max(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("max requires at least one value")
+        if self.vtype in (int, float, bool, str):
+            return max(args)
+        raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
 
     def range(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("range requires at least one value")
+        if self.vtype in (int, float, bool):
+            return max(args) - min(args)
+        raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
 
     def validate(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError
