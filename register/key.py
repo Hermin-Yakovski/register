@@ -129,28 +129,48 @@ class ParameterKey(_BaseKey):
 class PositionKey(_BaseKey):
     """Key for positional values — tuples of the same length."""
 
-    def __init__(self, id: int, name: str, name_cn: str, vtype: Any = None, arity: int = 1) -> None:
+    def __init__(
+        self, id: int, name: str, name_cn: str, vtype: Any = None, arity: int = 0
+    ) -> None:
         super().__init__(id, name, name_cn, vtype)
-        self._arity = arity
-
-    @property
-    def arity(self) -> int:
-        return self._arity
+        if arity < 1:
+            raise RegisterError("arity must be >= 1")
+        self.arity = arity
 
     def sum(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("sum requires at least one value")
+        if self.vtype in (int, float, bool):
+            return [sum(elems) for elems in zip(*args, strict=True)]
+        raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
     def mean(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("mean requires at least one value")
+        if self.vtype in (int, float, bool):
+            return [sum(elems) / len(args) for elems in zip(*args, strict=True)]
+        raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
     def min(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("min requires at least one value")
+        if self.vtype in (int, float, bool):
+            return [min(elems) for elems in zip(*args, strict=True)]
+        raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
 
     def max(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("max requires at least one value")
+        if self.vtype in (int, float, bool):
+            return [max(elems) for elems in zip(*args, strict=True)]
+        raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
 
     def range(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if not args:
+            raise RegisterError("range requires at least one value")
+        if self.vtype in (int, float, bool):
+            return [max(elems) - min(elems) for elems in zip(*args, strict=True)]
+        raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
 
     def validate(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError

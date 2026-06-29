@@ -247,3 +247,95 @@ class TestParameterKeyRange:
         k = ParameterKey(1, "test", "测试", d)
         with pytest.raises(NotImplementedError):
             k.range(DimensionAsKey(), d)
+
+
+class TestPositionKeyConstructor:
+    def test_arity_stored(self) -> None:
+        k = PositionKey(1, "xy", "坐标", float, arity=2)
+        assert k.arity == 2
+
+    def test_arity_zero_raises(self) -> None:
+        from register.exception import RegisterError
+        with pytest.raises(RegisterError):
+            PositionKey(1, "xy", "坐标", float, arity=0)
+
+    def test_arity_negative_raises(self) -> None:
+        from register.exception import RegisterError
+        with pytest.raises(RegisterError):
+            PositionKey(1, "xy", "坐标", float, arity=-1)
+
+    def test_isinstance_register_key(self) -> None:
+        k = PositionKey(1, "xy", "坐标", float, arity=2)
+        assert isinstance(k, RegisterKey)
+
+    def test_eq_same_class_same_id(self) -> None:
+        k1 = PositionKey(1, "xy", "坐标", float, arity=2)
+        k2 = PositionKey(1, "xy", "坐标", float, arity=3)
+        assert k1 == k2
+
+    def test_eq_different_class(self) -> None:
+        p = ParameterKey(1, "x", "X", int)
+        pos = PositionKey(1, "x", "X", int, arity=2)
+        assert p != pos
+
+
+class TestPositionKeyAggregation:
+    def _make_key(self, vtype=float, arity=3):
+        return PositionKey(1, "xyz", "坐标", vtype, arity=arity)
+
+    def test_sum_int(self) -> None:
+        k = self._make_key(int, arity=3)
+        result = k.sum(DimensionAsKey(), (1, 2, 3), (4, 5, 6))
+        assert result == [5, 7, 9]
+
+    def test_sum_float(self) -> None:
+        k = self._make_key(float, arity=2)
+        result = k.sum(DimensionAsKey(), (1.0, 2.0), (3.0, 4.0))
+        assert result == [4.0, 6.0]
+
+    def test_sum_bool(self) -> None:
+        k = self._make_key(bool, arity=2)
+        result = k.sum(DimensionAsKey(), (True, False), (True, True))
+        assert result == [2, 1]
+
+    def test_mean_float(self) -> None:
+        k = self._make_key(float, arity=3)
+        result = k.mean(DimensionAsKey(), (1.0, 2.0, 3.0), (3.0, 4.0, 5.0))
+        assert result == [2.0, 3.0, 4.0]
+
+    def test_min_int(self) -> None:
+        k = self._make_key(int, arity=3)
+        result = k.min(DimensionAsKey(), (1, 5, 3), (4, 2, 6))
+        assert result == [1, 2, 3]
+
+    def test_max_int(self) -> None:
+        k = self._make_key(int, arity=3)
+        result = k.max(DimensionAsKey(), (1, 5, 3), (4, 2, 6))
+        assert result == [4, 5, 6]
+
+    def test_range_int(self) -> None:
+        k = self._make_key(int, arity=3)
+        result = k.range(DimensionAsKey(), (1, 5, 3), (4, 2, 6))
+        assert result == [3, 3, 3]
+
+    def test_mismatched_lengths_raises(self) -> None:
+        k = self._make_key(int, arity=3)
+        with pytest.raises(ValueError):
+            k.sum(DimensionAsKey(), (1, 2, 3), (4, 5))
+
+    def test_empty_args_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int, arity=3)
+        with pytest.raises(RegisterError):
+            k.sum(DimensionAsKey())
+
+    def test_mean_empty_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(float, arity=2)
+        with pytest.raises(RegisterError):
+            k.mean(DimensionAsKey())
+
+    def test_str_vtype_not_implemented(self) -> None:
+        k = PositionKey(1, "x", "X", str, arity=2)
+        with pytest.raises(NotImplementedError):
+            k.sum(DimensionAsKey(), ("a", "b"))
