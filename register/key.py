@@ -200,7 +200,7 @@ class PositionKey(_BaseKey):
 class IterableKey(_BaseKey):
     """Key for iterable values — variable-length collections of vtype."""
 
-    def _validate_args(self, args: tuple) -> None:
+    def _validate_args(self, args: tuple[Any, ...]) -> None:
         for a in args:
             if not a:
                 raise RegisterError("iterable must not be empty")
