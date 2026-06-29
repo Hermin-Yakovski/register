@@ -179,20 +179,42 @@ class PositionKey(_BaseKey):
 class IterableKey(_BaseKey):
     """Key for iterable values — variable-length collections of vtype."""
 
+    def _validate_args(self, args: tuple) -> None:
+        for a in args:
+            if not a:
+                raise RegisterError("iterable must not be empty")
+
     def sum(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        if self.vtype in (int, float, bool):
+            return [sum(a) for a in args]
+        elif self.vtype is str or isinstance(self.vtype, Dimension):
+            from collections import Counter
+            return [dict(Counter(a)) for a in args]
+        raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
     def mean(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        self._validate_args(args)
+        if self.vtype in (int, float, bool):
+            return [sum(a) / len(a) for a in args]
+        raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
     def min(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        self._validate_args(args)
+        if self.vtype in (int, float, bool, str):
+            return [min(a) for a in args]
+        raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
 
     def max(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        self._validate_args(args)
+        if self.vtype in (int, float, bool, str):
+            return [max(a) for a in args]
+        raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
 
     def range(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError
+        self._validate_args(args)
+        if self.vtype in (int, float, bool):
+            return [max(a) - min(a) for a in args]
+        raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
 
     def validate(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError

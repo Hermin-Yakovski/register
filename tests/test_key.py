@@ -339,3 +339,146 @@ class TestPositionKeyAggregation:
         k = PositionKey(1, "x", "X", str, arity=2)
         with pytest.raises(NotImplementedError):
             k.sum(DimensionAsKey(), ("a", "b"))
+
+
+class TestIterableKeyAggregation:
+    def _make_key(self, vtype=int):
+        return IterableKey(1, "scores", "分数", vtype)
+
+    # sum
+    def test_sum_int(self) -> None:
+        k = self._make_key(int)
+        result = k.sum(DimensionAsKey(), [1, 2, 3], [4, 5])
+        assert result == [6, 9]
+
+    def test_sum_float(self) -> None:
+        k = self._make_key(float)
+        result = k.sum(DimensionAsKey(), [1.0, 2.0], [3.0])
+        assert result == [3.0, 3.0]
+
+    def test_sum_bool(self) -> None:
+        k = self._make_key(bool)
+        result = k.sum(DimensionAsKey(), [True, False, True], [True])
+        assert result == [2, 1]
+
+    def test_sum_int_empty_iterable(self) -> None:
+        k = self._make_key(int)
+        result = k.sum(DimensionAsKey(), [], [1, 2])
+        assert result == [0, 3]
+
+    def test_sum_str(self) -> None:
+        k = self._make_key(str)
+        result = k.sum(DimensionAsKey(), ["a", "b", "a"], ["c"])
+        assert result == [{"a": 2, "b": 1}, {"c": 1}]
+
+    def test_sum_dimension(self) -> None:
+        from register.dimension import Dimension
+        d1 = Dimension("r1", "区域1", "R1")
+        d2 = Dimension("r2", "区域2", "R2")
+        k = IterableKey(1, "test", "测试", d1)
+        result = k.sum(DimensionAsKey(), [d1, d2, d1], [d2])
+        assert result == [{d1: 2, d2: 1}, {d2: 1}]
+
+    def test_sum_empty_args(self) -> None:
+        k = self._make_key(int)
+        result = k.sum(DimensionAsKey())
+        assert result == []
+
+    def test_sum_unsupported_vtype(self) -> None:
+        k = IterableKey(1, "test", "测试", list)
+        with pytest.raises(NotImplementedError):
+            k.sum(DimensionAsKey(), [[1], [2]])
+
+    # mean
+    def test_mean_int(self) -> None:
+        k = self._make_key(int)
+        result = k.mean(DimensionAsKey(), [1, 2, 3], [4, 5])
+        assert result == [2.0, 4.5]
+
+    def test_mean_empty_iterable_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.mean(DimensionAsKey(), [])
+
+    def test_mean_str_not_implemented(self) -> None:
+        k = self._make_key(str)
+        with pytest.raises(NotImplementedError):
+            k.mean(DimensionAsKey(), ["a", "b"])
+
+    # min
+    def test_min_int(self) -> None:
+        k = self._make_key(int)
+        result = k.min(DimensionAsKey(), [3, 1, 2], [5, 4])
+        assert result == [1, 4]
+
+    def test_min_str(self) -> None:
+        k = self._make_key(str)
+        result = k.min(DimensionAsKey(), ["banana", "apple", "cherry"], ["date", "elderberry"])
+        assert result == ["apple", "date"]
+
+    def test_min_empty_iterable_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.min(DimensionAsKey(), [])
+
+    def test_min_dimension_not_implemented(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = IterableKey(1, "test", "测试", d)
+        with pytest.raises(NotImplementedError):
+            k.min(DimensionAsKey(), [d])
+
+    # max
+    def test_max_int(self) -> None:
+        k = self._make_key(int)
+        result = k.max(DimensionAsKey(), [3, 1, 2], [5, 4])
+        assert result == [3, 5]
+
+    def test_max_str(self) -> None:
+        k = self._make_key(str)
+        result = k.max(DimensionAsKey(), ["banana", "apple", "cherry"], ["date", "elderberry"])
+        assert result == ["cherry", "elderberry"]
+
+    def test_max_empty_iterable_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.max(DimensionAsKey(), [])
+
+    def test_max_dimension_not_implemented(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = IterableKey(1, "test", "测试", d)
+        with pytest.raises(NotImplementedError):
+            k.max(DimensionAsKey(), [d])
+
+    # range
+    def test_range_int(self) -> None:
+        k = self._make_key(int)
+        result = k.range(DimensionAsKey(), [3, 1, 5], [4, 2])
+        assert result == [4, 2]
+
+    def test_range_empty_iterable_raises(self) -> None:
+        from register.exception import RegisterError
+        k = self._make_key(int)
+        with pytest.raises(RegisterError):
+            k.range(DimensionAsKey(), [])
+
+    def test_range_str_not_implemented(self) -> None:
+        k = self._make_key(str)
+        with pytest.raises(NotImplementedError):
+            k.range(DimensionAsKey(), ["a", "b"])
+
+    def test_range_dimension_not_implemented(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = IterableKey(1, "test", "测试", d)
+        with pytest.raises(NotImplementedError):
+            k.range(DimensionAsKey(), [d])
+
+    # isinstance
+    def test_isinstance_register_key(self) -> None:
+        k = IterableKey(1, "scores", "分数", int)
+        assert isinstance(k, RegisterKey)
