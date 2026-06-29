@@ -482,3 +482,112 @@ class TestIterableKeyAggregation:
     def test_isinstance_register_key(self) -> None:
         k = IterableKey(1, "scores", "分数", int)
         assert isinstance(k, RegisterKey)
+
+
+class TestParameterKeyValidate:
+    def test_valid_int_values(self) -> None:
+        k = ParameterKey(1, "age", "年龄", int)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = 25
+        dak[()][(2,)] = 30
+        assert k.validate(dak) is True
+
+    def test_invalid_int_value(self) -> None:
+        k = ParameterKey(1, "age", "年龄", int)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = 25
+        dak[()][(2,)] = "thirty"
+        assert k.validate(dak) is False
+
+    def test_valid_str_values(self) -> None:
+        k = ParameterKey(1, "code", "编码", str)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = "A01"
+        dak[()][(2,)] = "B02"
+        assert k.validate(dak) is True
+
+    def test_valid_dimension_values(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = ParameterKey(1, "region", "地区", d)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = d
+        assert k.validate(dak) is True
+
+    def test_invalid_dimension_value(self) -> None:
+        from register.dimension import Dimension
+        d = Dimension("r", "区域", "R")
+        k = ParameterKey(1, "region", "地区", d)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = "not a dimension"
+        assert k.validate(dak) is False
+
+    def test_empty_data_is_valid(self) -> None:
+        k = ParameterKey(1, "age", "年龄", int)
+        dak = DimensionAsKey()
+        assert k.validate(dak) is True
+
+    def test_none_vtype_is_valid(self) -> None:
+        k = ParameterKey(1, "x", "X")
+        dak = DimensionAsKey()
+        dak[()][(1,)] = "anything"
+        dak[()][(2,)] = 42
+        assert k.validate(dak) is True
+
+
+class TestPositionKeyValidate:
+    def test_valid_tuples(self) -> None:
+        k = PositionKey(1, "xy", "坐标", float, arity=2)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = (1.0, 2.0)
+        dak[()][(2,)] = (3.0, 4.0)
+        assert k.validate(dak) is True
+
+    def test_wrong_arity(self) -> None:
+        k = PositionKey(1, "xy", "坐标", float, arity=2)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = (1.0, 2.0, 3.0)
+        assert k.validate(dak) is False
+
+    def test_wrong_element_type(self) -> None:
+        k = PositionKey(1, "xy", "坐标", float, arity=2)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = (1.0, "not a float")
+        assert k.validate(dak) is False
+
+    def test_not_a_tuple(self) -> None:
+        k = PositionKey(1, "xy", "坐标", float, arity=2)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = [1.0, 2.0]
+        assert k.validate(dak) is False
+
+    def test_empty_data_is_valid(self) -> None:
+        k = PositionKey(1, "xy", "坐标", float, arity=2)
+        dak = DimensionAsKey()
+        assert k.validate(dak) is True
+
+
+class TestIterableKeyValidate:
+    def test_valid_lists(self) -> None:
+        k = IterableKey(1, "scores", "分数", int)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = [1, 2, 3]
+        dak[()][(2,)] = [4, 5]
+        assert k.validate(dak) is True
+
+    def test_invalid_element_type(self) -> None:
+        k = IterableKey(1, "scores", "分数", int)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = [1, "two", 3]
+        assert k.validate(dak) is False
+
+    def test_not_iterable(self) -> None:
+        k = IterableKey(1, "scores", "分数", int)
+        dak = DimensionAsKey()
+        dak[()][(1,)] = 42
+        assert k.validate(dak) is False
+
+    def test_empty_data_is_valid(self) -> None:
+        k = IterableKey(1, "scores", "分数", int)
+        dak = DimensionAsKey()
+        assert k.validate(dak) is True
