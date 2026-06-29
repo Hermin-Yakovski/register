@@ -1,5 +1,5 @@
 import pytest
-from register import Register, Parameter, Dimension
+from register import Register, ParameterKey, Dimension
 from register.parameter import Id
 
 
@@ -32,11 +32,11 @@ def sample_dimension():
 
 @pytest.fixture
 def sample_parameter():
-    """Sample Parameter for testing."""
-    return Parameter(100, "test_param", "测试参数", int)
+    """Sample ParameterKey for testing."""
+    return ParameterKey(100, "test_param", "测试参数", int)
 
 
 @pytest.fixture
 def price_parameter():
-    """Price Parameter with a float type."""
-    return Parameter(4, "price", "价格", float)
+    """Price ParameterKey with a float type."""
+    return ParameterKey(4, "price", "价格", float)

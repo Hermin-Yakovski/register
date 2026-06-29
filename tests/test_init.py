@@ -4,10 +4,13 @@ def test_import_register():
     assert Register is not None
 
 
-def test_import_parameter():
-    from register import Parameter
+def test_import_key_classes():
+    from register import RegisterKey, ParameterKey, PositionKey, IterableKey
 
-    assert Parameter is not None
+    assert RegisterKey is not None
+    assert ParameterKey is not None
+    assert PositionKey is not None
+    assert IterableKey is not None
 
 
 def test_import_dimension():
