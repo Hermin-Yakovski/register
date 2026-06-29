@@ -265,3 +265,91 @@ def test_register_repr_with_data():
     assert "cells=3" in result
     assert "id: 2" in result
     assert "name: 1" in result
+
+
+# --- New tests from Task 6: MEAN, bounded TypeVar, and validate ---
+
+
+class TestMethodEnum:
+    def test_mean_exists(self) -> None:
+        from register.register import Method
+        assert Method(5) is not None
+
+    def test_mean_repr(self) -> None:
+        from register.register import Method
+        assert repr(Method(5)) == "MEAN"
+
+    def test_mean_equality(self) -> None:
+        from register.register import Method
+        assert Method(5) == Method(5)
+
+    def test_mean_inequality(self) -> None:
+        from register.register import Method
+        assert Method(5) != Method(1)
+
+    def test_all_methods(self) -> None:
+        from register.register import Method
+        names = {repr(Method(i)) for i in range(6)}
+        assert names == {"ALL", "SUM", "MAX", "MIN", "RANGE", "MEAN"}
+
+
+class TestRegisterClassMethods:
+    def test_mean_class_attr(self) -> None:
+        from register.register import Method, Register
+        assert Register.MEAN == Method(5)
+
+    def test_all_methods_present(self) -> None:
+        from register.register import Method, Register
+        assert Register.ALL == Method(0)
+        assert Register.SUM == Method(1)
+        assert Register.MAX == Method(2)
+        assert Register.MIN == Method(3)
+        assert Register.RANGE == Method(4)
+        assert Register.MEAN == Method(5)
+
+
+class TestRegisterValidate:
+    def test_validate_empty_register(self) -> None:
+        from register.register import Register
+        reg = Register()
+        assert reg.validate() is True
+
+    def test_validate_valid_data(self) -> None:
+        from register.register import Register
+        from register.key import ParameterKey
+        reg = Register()
+        key = ParameterKey(1, "age", "年龄", int)
+        dak = reg[key]
+        dak[()][(1,)] = 25
+        dak[()][(2,)] = 30
+        assert reg.validate() is True
+
+    def test_validate_invalid_data(self) -> None:
+        from register.register import Register
+        from register.key import ParameterKey
+        reg = Register()
+        key = ParameterKey(1, "age", "年龄", int)
+        dak = reg[key]
+        dak[()][(1,)] = 25
+        dak[()][(2,)] = "not an int"
+        assert reg.validate() is False
+
+    def test_validate_multiple_keys(self) -> None:
+        from register.register import Register
+        from register.key import ParameterKey
+        reg = Register()
+        k1 = ParameterKey(1, "age", "年龄", int)
+        k2 = ParameterKey(2, "name", "名称", str)
+        reg[k1][()][(1,)] = 25
+        reg[k2][()][(1,)] = "Alice"
+        assert reg.validate() is True
+
+    def test_validate_one_key_invalid(self) -> None:
+        from register.register import Register
+        from register.key import ParameterKey
+        reg = Register()
+        k1 = ParameterKey(1, "age", "年龄", int)
+        k2 = ParameterKey(2, "name", "名称", str)
+        reg[k1][()][(1,)] = 25
+        reg[k2][()][(1,)] = 42
+        assert reg.validate() is False

@@ -2,21 +2,22 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import Any, Generic, TypeVar, TYPE_CHECKING
 
 from .dimension import Dimension
+from .key import RegisterKey
 
 if TYPE_CHECKING:
-    from typing import Any, Generator, Iterator
+    from typing import Generator, Iterator
 
 
-K = TypeVar("K")
+K = TypeVar("K", bound=RegisterKey)
 
 logger = logging.getLogger("register")
 
 
 class Method(int):
-    _NAMES: dict[int, str] = {0: "ALL", 1: "SUM", 2: "MAX", 3: "MIN", 4: "RANGE"}
+    _NAMES: dict[int, str] = {0: "ALL", 1: "SUM", 2: "MAX", 3: "MIN", 4: "RANGE", 5: "MEAN"}
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Method):
@@ -66,6 +67,7 @@ class Register(Generic[K]):
     MAX: Method = Method(2)
     MIN: Method = Method(3)
     RANGE: Method = Method(4)
+    MEAN: Method = Method(5)
     _data: dict[K, DimensionAsKey]
 
     def __init__(self) -> None:
@@ -102,6 +104,13 @@ class Register(Generic[K]):
                 yield index
             elif all(self.ALL == j or i == j for i, j in zip(index, target)):
                 yield index
+
+    def validate(self, **config: Any) -> bool:
+        rs: bool = True
+        for key in self._data:
+            data = self._data[key]
+            rs &= key.validate(data, **config)
+        return rs
 
 
 __all__ = [
