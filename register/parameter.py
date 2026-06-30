@@ -1,12 +1,4 @@
-from .key import ParameterKey
+# ParameterKey will be re-implemented in a later task.
+# Id, Code, Name are temporarily unavailable.
 
-Id = ParameterKey(1, "id", "ID", int)
-Code = ParameterKey(2, "code", "编码", str)
-Name = ParameterKey(3, "name", "名称", str)
-
-
-__all__ = [
-    "Id",
-    "Code",
-    "Name",
-]
+__all__: list[str] = []
