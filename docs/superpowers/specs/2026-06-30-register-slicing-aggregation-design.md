@@ -234,9 +234,149 @@ class RegisterKey(ABC):
     def validate(self, *args: Any, **kwargs: Any) -> bool: ...
 ```
 
-### Impact on concrete key classes
+## Key Hierarchy
 
-All three key classes (`ParameterKey`, `PositionKey`, `IterableKey`) drop the `data` parameter from their method implementations. The `validate` method previously accessed `data._data` to iterate stored values — this needs a different approach (see below).
+`ParameterKey` is split into three specialized types, each with clear aggregation support:
+
+```
+RegisterKey (ABC, public) — the protocol
+└── _BaseKey (private) — shared implementation
+    ├── NumKey          # int, float, bool — sum, mean, min, max, range
+    ├── StrKey          # str — min, max only
+    ├── DimensionKey    # dimension values (int) — min, max, range
+    ├── PositionKey     # tuples of fixed arity
+    └── IterableKey     # variable-length iterables
+```
+
+### NumKey
+
+For numerical types (int, float, bool). Takes a `vtype` parameter to specify which numeric type.
+
+```python
+class NumKey(_BaseKey):
+    """Key for numerical values (int, float, bool)."""
+
+    def __init__(self, id: int, name: str, name_cn: str, vtype: type) -> None:
+        super().__init__(id, name, name_cn, vtype)
+
+    def sum(self, *args: Any, **kwargs: Any) -> Any:
+        return sum(args)
+
+    def mean(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("mean requires at least one value")
+        return sum(args) / len(args)
+
+    def min(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("min requires at least one value")
+        return min(args)
+
+    def max(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("max requires at least one value")
+        return max(args)
+
+    def range(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("range requires at least one value")
+        return max(args) - min(args)
+
+    def validate(self, *args: Any, **kwargs: Any) -> bool:
+        if self.vtype is None:
+            return True
+        return all(isinstance(v, self.vtype) for v in args)
+```
+
+### StrKey
+
+For string values. Only `min` and `max` (lexicographic) are supported.
+
+```python
+class StrKey(_BaseKey):
+    """Key for string values."""
+
+    def __init__(self, id: int, name: str, name_cn: str) -> None:
+        super().__init__(id, name, name_cn, vtype=str)
+
+    def sum(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("sum not supported for StrKey")
+
+    def mean(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("mean not supported for StrKey")
+
+    def min(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("min requires at least one value")
+        return min(args)
+
+    def max(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("max requires at least one value")
+        return max(args)
+
+    def range(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("range not supported for StrKey")
+
+    def validate(self, *args: Any, **kwargs: Any) -> bool:
+        return all(isinstance(v, str) for v in args)
+```
+
+### DimensionKey
+
+For dimension reference values (stored as int). Supports `min`, `max`, `range`.
+
+```python
+class DimensionKey(_BaseKey):
+    """Key for dimension values (always int)."""
+
+    def __init__(self, id: int, name: str, name_cn: str) -> None:
+        super().__init__(id, name, name_cn, vtype=int)
+
+    def sum(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("sum not supported for DimensionKey")
+
+    def mean(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("mean not supported for DimensionKey")
+
+    def min(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("min requires at least one value")
+        return min(args)
+
+    def max(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("max requires at least one value")
+        return max(args)
+
+    def range(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("range requires at least one value")
+        return max(args) - min(args)
+
+    def validate(self, *args: Any, **kwargs: Any) -> bool:
+        return all(isinstance(v, int) for v in args)
+```
+
+### Aggregation support matrix
+
+| Key Type | vtype | sum | mean | min | max | range |
+|----------|-------|-----|------|-----|-----|-------|
+| NumKey | int, float, bool (caller specifies) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| StrKey | str (fixed) | ✗ | ✗ | ✓ lex | ✓ lex | ✗ |
+| DimensionKey | int (fixed) | ✗ | ✗ | ✓ | ✓ | ✓ |
+| PositionKey | numeric, fixed arity | ✓ | ✓ | ✓ | ✓ | ✓ |
+| IterableKey | any, variable length | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+### parameter.py updates
+
+```python
+from .key import NumKey, StrKey
+
+Id = NumKey(1, "id", "ID", int)
+Code = StrKey(2, "code", "编码")
+Name = StrKey(3, "name", "名称")
+```
 
 ### Validate redesign
 
@@ -259,30 +399,17 @@ def validate(self, **config: Any) -> bool:
     return rs
 ```
 
-```python
-# ParameterKey.validate()
-def validate(self, *args: Any, **kwargs: Any) -> bool:
-    if self.vtype is None:
-        return True
-    for value in args:
-        try:
-            if not isinstance(value, self.vtype):
-                return False
-        except TypeError:
-            if value is not self.vtype:
-                return False
-    return True
-```
+Validate is simpler now — each key type checks its own vtype directly (see Key Hierarchy section). No more `TypeError` fallback for Dimension instances since `DimensionKey` handles that case explicitly.
 
 ## File Layout
 
 ```
 register/
-├── key.py          # RegisterKey, _BaseKey, ParameterKey, PositionKey, IterableKey
-│                   # Changed: data param removed from all method signatures
+├── key.py          # RegisterKey, _BaseKey, NumKey, StrKey, DimensionKey, PositionKey, IterableKey
+│                   # Changed: ParameterKey split into NumKey/StrKey/DimensionKey, data param removed
 ├── register.py     # Register, Method, KeyView, IndexSpace, Selection
 │                   # Changed: DimensionAsKey removed, _data is plain nested dict
-├── parameter.py    # Unchanged (Id, Code, Name singletons)
+├── parameter.py    # Updated: Id→NumKey, Code/Name→StrKey
 ├── dimension.py    # Unchanged
 ├── exception.py    # Unchanged
 └── __init__.py     # Updated exports
@@ -291,7 +418,7 @@ register/
 ## Updated Exports
 
 ```python
-from .key import RegisterKey, ParameterKey, PositionKey, IterableKey
+from .key import RegisterKey, NumKey, StrKey, DimensionKey, PositionKey, IterableKey
 from .register import Register, Method, KeyView, IndexSpace, Selection
 from .parameter import Id, Code, Name
 from .dimension import Dimension, Index, Metric
@@ -304,7 +431,9 @@ __all__ = [
     "IndexSpace",
     "Selection",
     "RegisterKey",
-    "ParameterKey",
+    "NumKey",
+    "StrKey",
+    "DimensionKey",
     "PositionKey",
     "IterableKey",
     "Dimension",
@@ -465,6 +594,7 @@ def _matches(idx_tuple: tuple[int, ...], pattern: tuple) -> bool:
 | `Register._data` | `dict[K, DimensionAsKey]` via `defaultdict` | `dict[K, dict[tuple, dict[tuple, Any]]]` plain dict |
 | `Register.ALL` | `Method(0)` class attribute | Removed — `select()` uses `None` as wildcard |
 | `RegisterKey` methods | `(self, data, *args, **kwargs)` | `(self, *args, **kwargs)` — `data` removed |
+| `ParameterKey` | One class handling int/float/str/Dimension | Split into `NumKey`, `StrKey`, `DimensionKey` |
 | New classes | — | `KeyView`, `IndexSpace`, `Selection` |
 | Slicing | Not supported | `int`, `list[int]`, `slice` in index tuples |
 | Aggregation dispatch | Not supported | `Selection.agg(method, **kwargs)` |
