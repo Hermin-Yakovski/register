@@ -435,14 +435,7 @@ class DimensionCollectionKey(_BaseKey):
         return min(flat), max(flat)
 
     def validate(self, *args: Any, reference: Register, **kwargs: Any) -> bool:
-        for collection in args:
-            try:
-                elements = iter(collection)
-            except TypeError:
-                return False
-            if not all(v in reference[Id][self._dim,] for v in elements):
-                return False
-        return True
+        return all(v in reference[Id][self._dim,] for collection in args for v in collection)
 ```
 
 ### Aggregation support matrix
