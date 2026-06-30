@@ -244,7 +244,7 @@ RegisterKey (ABC, public) — the protocol
     ├── NumKey                    # overrides: sum, mean, min, max, range
     ├── StrKey                    # overrides: min, max
     ├── DimensionKey              # overrides: min, max, range
-    └── DimensionCollectionKey    # overrides: sum, min, max, range
+    └── DimensionCollectionKey    # overrides: (none — validate only)
 ```
 
 ### _BaseKey
@@ -412,28 +412,6 @@ class DimensionCollectionKey(_BaseKey):
         self._dim = dim
         self._iter_type = iter_type
 
-    def sum(self, *args: Any, **kwargs: Any) -> Any:
-        all_elements: set[Any] = set()
-        for collection in args:
-            all_elements.update(collection)
-        return self._iter_type(all_elements)
-
-    def min(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("min requires at least one value")
-        return min(elem for collection in args for elem in collection)
-
-    def max(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("max requires at least one value")
-        return max(elem for collection in args for elem in collection)
-
-    def range(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("range requires at least one value")
-        flat = [elem for collection in args for elem in collection]
-        return min(flat), max(flat)
-
     def validate(self, *args: Any, reference: Register, **kwargs: Any) -> bool:
         return all(v in reference[Id][self._dim,] and isinstance(collection, self._iter_type) for collection in args for v in collection)
 ```
@@ -445,7 +423,7 @@ class DimensionCollectionKey(_BaseKey):
 | NumKey | int, float, bool (caller specifies) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | StrKey | str (fixed) | ✗ | ✗ | ✓ lex | ✓ lex | ✗ |
 | DimensionKey | int (fixed) | ✗ | ✗ | ✓ | ✓ | ✓ (min,max) |
-| DimensionCollectionKey | int (fixed), _iter_type=set/list/tuple | ✓ union | ✗ | ✓ | ✓ | ✓ (min,max) |
+| DimensionCollectionKey | int (fixed), _iter_type=set/list/tuple | ✗ | ✗ | ✗ | ✗ | ✗ |
 
 ### parameter.py updates
 
