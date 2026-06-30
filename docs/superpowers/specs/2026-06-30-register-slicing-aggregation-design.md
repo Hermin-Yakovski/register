@@ -240,7 +240,7 @@ RegisterKey (ABC, public) — the protocol
     ├── NumKey                    # overrides: sum, mean, min, max, range
     ├── StrKey                    # overrides: min, max
     ├── DimensionKey              # overrides: min, max, range
-    └── DimensionCollectionKey    # overrides: (none — validate only)
+    └── DimensionCollectionKey    # overrides: min, max, range (per-index)
 ```
 
 ### _BaseKey
@@ -408,6 +408,15 @@ class DimensionCollectionKey(_BaseKey):
         self._dim = dim
         self._iter_type = iter_type
 
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+        return {k: min(v) for k, v in selection.items()}
+
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+        return {k: max(v) for k, v in selection.items()}
+
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+        return {k: (min(v), max(v)) for k, v in selection.items()}
+
     def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, self._iter_type) and all(elem in reference[Id][self._dim,] for elem in v) for k, v in selection.items()}
 ```
@@ -419,7 +428,7 @@ class DimensionCollectionKey(_BaseKey):
 | NumKey | int, float, bool (caller specifies) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | StrKey | str (fixed) | ✗ | ✗ | ✓ lex | ✓ lex | ✗ |
 | DimensionKey | int (fixed) | ✗ | ✗ | ✓ | ✓ | ✓ (min,max) |
-| DimensionCollectionKey | int (fixed), _iter_type=set/list/tuple | ✗ | ✗ | ✗ | ✗ | ✗ |
+| DimensionCollectionKey | int (fixed), _iter_type=set/list/tuple | ✗ | ✗ | ✓ per-idx | ✓ per-idx | ✓ per-idx (min,max) |
 
 ### parameter.py updates
 
@@ -441,8 +450,7 @@ def validate(self, **kwargs: Any) -> Register[K]:
     result = Register[K]()
     for key in self._data:
         for dims in self._data[key]:
-            for idx, value in self._data[key][dims].items():
-                result[key][dims][idx] = key.validate({idx: value}, **kwargs)
+            result[key][dims].update(key.validate(self._data[key][dims], **kwargs))
                 
     return result
 ```
