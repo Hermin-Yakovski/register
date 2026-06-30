@@ -39,11 +39,11 @@ Register[K]
               ├── __getitem__((1, 1)) → value (exact access)
               ├── __setitem__((1, 1), val) → assignment
               └── __getitem__((slice, list)) → Selection[K]
-                    ├── .sum(**kwargs) → key.sum(*values, **kwargs)
-                    ├── .mean(**kwargs) → key.mean(*values, **kwargs)
-                    ├── .min(**kwargs) → key.min(*values, **kwargs)
-                    ├── .max(**kwargs) → key.max(*values, **kwargs)
-                    ├── .range(**kwargs) → key.range(*values, **kwargs)
+                    ├── .sum(**kwargs) → key.sum(data, **kwargs)
+                    ├── .mean(**kwargs) → key.mean(data, **kwargs)
+                    ├── .min(**kwargs) → key.min(data, **kwargs)
+                    ├── .max(**kwargs) → key.max(data, **kwargs)
+                    ├── .range(**kwargs) → key.range(data, **kwargs)
                     └── .agg(method, **kwargs) → dispatch by Method enum
 ```
 
@@ -141,24 +141,24 @@ class Selection(Generic[K]):
         self._data = data
 
     def sum(self, **kwargs: Any) -> Any:
-        return self._key.sum(*self._data.values(), **kwargs)
+        return self._key.sum(self._data, **kwargs)
 
     def mean(self, **kwargs: Any) -> Any:
-        return self._key.mean(*self._data.values(), **kwargs)
+        return self._key.mean(self._data, **kwargs)
 
     def min(self, **kwargs: Any) -> Any:
-        return self._key.min(*self._data.values(), **kwargs)
+        return self._key.min(self._data, **kwargs)
 
     def max(self, **kwargs: Any) -> Any:
-        return self._key.max(*self._data.values(), **kwargs)
+        return self._key.max(self._data, **kwargs)
 
     def range(self, **kwargs: Any) -> Any:
-        return self._key.range(*self._data.values(), **kwargs)
+        return self._key.range(self._data, **kwargs)
 
     def agg(self, method: Method, **kwargs: Any) -> Any:
         name = _METHOD_NAMES[int(method)]
         fn = getattr(self._key, name)
-        return fn(*self._data.values(), **kwargs)
+        return fn(self._data, **kwargs)
 ```
 
 ### Method dispatch table
@@ -179,13 +179,13 @@ _METHOD_NAMES: dict[int, str] = {
 
 ```
 Selection.sum(**kwargs)
-  → self._key.sum(*self._values, **kwargs)
-    → ParameterKey.sum(1.1, 2.2, 3.3, 4.4, 5.5)
-      → sum(args) = 16.5
+  → self._key.sum(self._data, **kwargs)
+    → NumKey.sum({(1,1): 1.1, (1,2): 2.2, ...}, **kwargs)
+      → float(sum({(1,1): 1.1, ...}.values())) = 16.5
 
 Selection.agg(Register.SUM, **kwargs)
   → _METHOD_NAMES[1] = "sum"
-  → getattr(key, "sum")(*values, **kwargs)
+  → getattr(key, "sum")(self._data, **kwargs)
     → same as above
 ```
 
@@ -212,22 +212,22 @@ class RegisterKey(ABC):
     def name_cn(self) -> str: ...
 
     @abstractmethod
-    def sum(self, *args: Any, **kwargs: Any) -> Any: ...
+    def sum(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def mean(self, *args: Any, **kwargs: Any) -> Any: ...
+    def mean(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def min(self, *args: Any, **kwargs: Any) -> Any: ...
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def max(self, *args: Any, **kwargs: Any) -> Any: ...
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def range(self, *args: Any, **kwargs: Any) -> Any: ...
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def validate(self, *args: Any, **kwargs: Any) -> bool: ...
+    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> bool: ...
 ```
 
 ## Key Hierarchy
@@ -280,19 +280,19 @@ class _BaseKey(RegisterKey):
     def name_cn(self) -> str:
         return self._name_cn
 
-    def sum(self, *args: Any, **kwargs: Any) -> Any:
+    def sum(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         raise NotImplementedError(f"sum not supported for {type(self).__name__}")
 
-    def mean(self, *args: Any, **kwargs: Any) -> Any:
+    def mean(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         raise NotImplementedError(f"mean not supported for {type(self).__name__}")
 
-    def min(self, *args: Any, **kwargs: Any) -> Any:
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         raise NotImplementedError(f"min not supported for {type(self).__name__}")
 
-    def max(self, *args: Any, **kwargs: Any) -> Any:
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         raise NotImplementedError(f"max not supported for {type(self).__name__}")
 
-    def range(self, *args: Any, **kwargs: Any) -> Any:
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         raise NotImplementedError(f"range not supported for {type(self).__name__}")
 ```
 
@@ -310,31 +310,31 @@ class NumKey(_BaseKey):
             raise RegisterError(f"NumKey vtype must be float, int, or bool, got {vtype}")
         self.vtype = vtype
 
-    def sum(self, *args: Any, **kwargs: Any) -> Any:
-        return self.vtype(sum(args))
+    def sum(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        return self.vtype(sum(selection.values()))
 
-    def mean(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def mean(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("mean requires at least one value")
-        return sum(args) / len(args)
+        return sum(selection.values()) / len(selection)
 
-    def min(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("min requires at least one value")
-        return min(args)
+        return min(selection.values())
 
-    def max(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("max requires at least one value")
-        return max(args)
+        return max(selection.values())
 
-    def range(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("range requires at least one value")
-        return max(args) - min(args)
+        return max(selection.values()) - min(selection.values())
 
-    def validate(self, *args: Any, **kwargs: Any) -> bool:
-        return all(isinstance(v, self.vtype) for v in args)
+    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> bool:
+        return all(isinstance(v, self.vtype) for v in selection.values())
 ```
 
 ### StrKey
@@ -348,18 +348,18 @@ class StrKey(_BaseKey):
     def __init__(self, id: int, name: str, name_cn: str) -> None:
         super().__init__(id, name, name_cn)
 
-    def min(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("min requires at least one value")
-        return min(args)
+        return min(selection.values())
 
-    def max(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("max requires at least one value")
-        return max(args)
+        return max(selection.values())
 
-    def validate(self, *args: Any, **kwargs: Any) -> bool:
-        return all(isinstance(v, str) for v in args)
+    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> bool:
+        return all(isinstance(v, str) for v in selection.values())
 ```
 
 ### DimensionKey
@@ -374,23 +374,23 @@ class DimensionKey(_BaseKey):
         super().__init__(id, dim.name, dim.name_cn)
         self._dim = dim
 
-    def min(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("min requires at least one value")
-        return min(args)
+        return min(selection.values())
 
-    def max(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("max requires at least one value")
-        return max(args)
+        return max(selection.values())
 
-    def range(self, *args: Any, **kwargs: Any) -> Any:
-        if not args:
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
             raise RegisterError("range requires at least one value")
-        return min(args), max(args)
+        return min(selection.values()), max(selection.values())
 
-    def validate(self, *args: Any, reference: Register, **kwargs: Any) -> bool:
-        return all(v in reference[Id][self._dim,] for v in args)
+    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> bool:
+        return all(v in reference[Id][self._dim,] for v in selection.values())
 ```
 
 ### DimensionCollectionKey
@@ -408,8 +408,8 @@ class DimensionCollectionKey(_BaseKey):
         self._dim = dim
         self._iter_type = iter_type
 
-    def validate(self, *args: Any, reference: Register, **kwargs: Any) -> bool:
-        return all(v in reference[Id][self._dim,] and isinstance(collection, self._iter_type) for collection in args for v in collection)
+    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> bool:
+        return all(v in reference[Id][self._dim,] and isinstance(collection, self._iter_type) for collection in selection.values() for v in collection)
 ```
 
 ### Aggregation support matrix
@@ -446,7 +446,7 @@ def validate(self, **kwargs: Any) -> bool:
     rs = True
     for key in self._data:
         for dims in self._data[key]:
-            rs &= key.validate(*self._data[key][dims].values(), **kwargs)
+            rs &= key.validate(self._data[key][dims], **kwargs)
     return rs
 ```
 
@@ -540,7 +540,7 @@ class Register(Generic[K]):
         rs = True
         for key, dim_data in self._data.items():
             for dims, idx_dict in dim_data.items():
-                rs &= key.validate(*idx_dict.values(), reference=reference, **kwargs)
+                rs &= key.validate(idx_dict, reference=reference, **kwargs)
         return rs
 ```
 
