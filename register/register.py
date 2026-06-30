@@ -75,13 +75,15 @@ class Selection(Generic[K]):
 
 class IndexSpace(Generic[K]):
     _key: K
+    _dims: tuple[Dimension, ...]
     _data: dict[tuple[int, ...], Any]
 
-    def __init__(self, key: K, data: dict[tuple[int, ...], Any]) -> None:
+    def __init__(self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]) -> None:
         self._key = key
+        self._dims = dims
         self._data = data
 
-    def __getitem__(self, index: tuple) -> Any | Selection[K]:
+    def __getitem__(self, index: tuple[Any, ...]) -> Any | Selection[K]:
         if _has_slice(index):
             filtered = _resolve(index, self._data)
             return Selection(self._key, filtered)
@@ -97,7 +99,8 @@ class IndexSpace(Generic[K]):
         self._data.update(other)
 
     def __repr__(self) -> str:
-        return f"IndexSpace({self._key}, {len(self._data)} entries)"
+        dim_names = ",".join(repr(d) for d in self._dims)
+        return f"IndexSpace({self._key}, ({dim_names}), {len(self._data)} entries)"
 
 
 class KeyView(Generic[K]):
@@ -111,7 +114,7 @@ class KeyView(Generic[K]):
     def __getitem__(self, dims: tuple[Dimension, ...]) -> IndexSpace[K]:
         if dims not in self._data:
             self._data[dims] = {}
-        return IndexSpace(self._key, self._data[dims])
+        return IndexSpace(self._key, dims, self._data[dims])
 
     def __iter__(self) -> Iterator[tuple[Dimension, ...]]:
         return iter(self._data)
@@ -177,25 +180,26 @@ class Register(Generic[K]):
 
     def validate(self, **kwargs: Any) -> Register[K]:
         result: Register[K] = Register()
+        kwargs.setdefault("reference", self)
         for key in self._data:
             for dims in self._data[key]:
                 result[key][dims].update(key.validate(self._data[key][dims], **kwargs))
         return result
 
 
-def _has_slice(index: tuple) -> bool:
+def _has_slice(index: tuple[Any, ...]) -> bool:
     if not isinstance(index, tuple):
         index = (index,)
     return any(isinstance(elem, (slice, list)) for elem in index)
 
 
-def _resolve(index: tuple, data: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
+def _resolve(index: tuple[Any, ...], data: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
     if not isinstance(index, tuple):
         index = (index,)
     return {k: v for k, v in data.items() if _matches(k, index)}
 
 
-def _matches(idx_tuple: tuple[int, ...], pattern: tuple) -> bool:
+def _matches(idx_tuple: tuple[int, ...], pattern: tuple[Any, ...]) -> bool:
     for actual, selector in zip(idx_tuple, pattern):
         if isinstance(selector, int):
             if actual != selector:

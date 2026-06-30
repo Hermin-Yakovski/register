@@ -58,10 +58,12 @@ class _BaseKey(RegisterKey):
         return self._name
 
     def __hash__(self) -> int:
-        return hash(self._id)
+        return hash((type(self).__name__, self._id, self._name))
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, self.__class__) and self._id == getattr(other, "_id", None)
+        return (isinstance(other, self.__class__)
+                and self._id == getattr(other, "_id", None)
+                and self._name == getattr(other, "_name", None))
 
     @property
     def id(self) -> int:
@@ -116,17 +118,17 @@ class NumKey(_BaseKey):
     def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         if not selection:
             raise RegisterError("min requires at least one value")
-        return min(selection.values())
+        return self.vtype(min(selection.values()))
 
     def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         if not selection:
             raise RegisterError("max requires at least one value")
-        return max(selection.values())
+        return self.vtype(max(selection.values()))
 
     def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
         if not selection:
             raise RegisterError("range requires at least one value")
-        return max(selection.values()) - min(selection.values())
+        return self.vtype(max(selection.values()) - min(selection.values()))
 
     def validate(
         self, selection: dict[tuple[int, ...], Any], **kwargs: Any
@@ -160,7 +162,7 @@ class DimensionKey(_BaseKey):
     """Key for dimension values (always int)."""
 
     def __init__(self, id: int, dim: Dimension) -> None:
-        super().__init__(id, dim.name, dim.name_cn)
+        super().__init__(id, dim.name + 'Id', dim.name_cn + 'ID')
         self._dim = dim
 
     def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
@@ -179,18 +181,19 @@ class DimensionKey(_BaseKey):
         return min(selection.values()), max(selection.values())
 
     def validate(
-        self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
     ) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
 
-        return {k: v in reference[Id][self._dim,] for k, v in selection.items()}
+        reference = kwargs["reference"]
+        return {k: (v,) in reference[Id][self._dim,] for k, v in selection.items()}
 
 
 class DimensionCollectionKey(_BaseKey):
     """Key for collections of dimension values."""
 
     def __init__(self, id: int, dim: Dimension, iter_type: type = list) -> None:
-        super().__init__(id, dim.name, dim.name_cn)
+        super().__init__(id, dim.name + 'Collection', dim.name_cn + '集合')
         if iter_type not in (set, list, tuple):
             raise RegisterError(f"iter_type must be set, list, or tuple, got {iter_type}")
         self._dim = dim
@@ -206,12 +209,15 @@ class DimensionCollectionKey(_BaseKey):
         return {k: (min(v), max(v)) for k, v in selection.items()}
 
     def validate(
-        self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
     ) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
 
-        return {
-            k: isinstance(v, self._iter_type)
-            and all(elem in reference[Id][self._dim,] for elem in v)
-            for k, v in selection.items()
-        }
+        reference = kwargs["reference"]
+        result: dict[tuple[int, ...], bool] = {}
+        for k, v in selection.items():
+            if isinstance(v, self._iter_type):
+                result[k] = all((elem,) in reference[Id][self._dim,] for elem in v)  # type: ignore[attr-defined]
+            else:
+                result[k] = False
+        return result

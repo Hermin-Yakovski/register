@@ -1,4 +1,3 @@
-import pytest
 from register.register import _has_slice, _matches, _resolve, Selection
 from register import Register, NumKey, Dimension
 
@@ -41,6 +40,9 @@ class TestMatches:
 
     def test_slice_range_no_match(self):
         assert _matches((3, 1), (slice(1, 3), slice(None))) is False
+
+    def test_slice_start_no_match(self):
+        assert _matches((0, 1), (slice(1, 3), slice(None))) is False
 
     def test_slice_start_only(self):
         assert _matches((5, 1), (slice(3, None), slice(None))) is True
@@ -106,7 +108,18 @@ class TestKeyView:
         k = NumKey(1, "amount", "件量")
         dim = Dimension("loc", "地点", "L")
         idx_space = reg[k][dim,]
-        assert repr(idx_space) == f"IndexSpace({k}, 0 entries)"
+        assert repr(idx_space) == f"IndexSpace({k}, ({dim!r}), 0 entries)"
+
+    def test_repr_with_data(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        reg[k][dim,][2,] = 20.0
+        result = repr(reg[k])
+        assert f"KeyView({k}" in result
+        assert "loc" in result
+        assert "2" in result
 
     def test_iter(self):
         reg = Register()

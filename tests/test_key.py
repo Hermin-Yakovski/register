@@ -23,12 +23,12 @@ class TestBaseKey:
 
     def test_hash(self):
         k1 = ConcreteKey(1, "a", "A")
-        k2 = ConcreteKey(1, "b", "B")
+        k2 = ConcreteKey(1, "a", "B")
         assert hash(k1) == hash(k2)
 
     def test_eq_same_class(self):
         k1 = ConcreteKey(1, "a", "A")
-        k2 = ConcreteKey(1, "b", "B")
+        k2 = ConcreteKey(1, "a", "B")
         assert k1 == k2
 
     def test_eq_different_id(self):
@@ -68,6 +68,11 @@ class TestBaseKey:
         with pytest.raises(NotImplementedError, match="range not supported"):
             k.range({})
 
+    def test_validate_raises(self):
+        k = ConcreteKey(1, "a", "A")
+        with pytest.raises(NotImplementedError, match="validate not supported"):
+            k.validate({})
+
     def test_is_register_key(self):
         k = ConcreteKey(1, "a", "A")
         assert isinstance(k, RegisterKey)
@@ -102,42 +107,82 @@ class TestNumKey:
         assert result == 10
         assert isinstance(result, int)
 
+    def test_sum_bool(self):
+        k = NumKey(1, "a", "A", bool)
+        result = k.sum({(1,): True, (2,): True, (3,): False})
+        assert result is True  # bool(2) == True
+        assert isinstance(result, bool)
+
     def test_sum_empty(self):
         k = NumKey(1, "a", "A", float)
         result = k.sum({})
         assert result == 0.0
 
-    def test_mean(self):
+    def test_mean_float(self):
         k = NumKey(1, "a", "A", float)
         result = k.mean({(1,): 2.0, (2,): 4.0})
         assert result == 3.0
+
+    def test_mean_int(self):
+        k = NumKey(1, "a", "A", int)
+        result = k.mean({(1,): 2, (2,): 4})
+        assert result == 3.0
+
+    def test_mean_bool(self):
+        k = NumKey(1, "a", "A", bool)
+        result = k.mean({(1,): True, (2,): False, (3,): True})
+        assert result == pytest.approx(2 / 3)
 
     def test_mean_empty(self):
         k = NumKey(1, "a", "A", float)
         with pytest.raises(RegisterError, match="mean requires at least one value"):
             k.mean({})
 
-    def test_min(self):
+    def test_min_float(self):
         k = NumKey(1, "a", "A", float)
         assert k.min({(1,): 3.0, (2,): 1.0}) == 1.0
+
+    def test_min_int(self):
+        k = NumKey(1, "a", "A", int)
+        assert k.min({(1,): 3, (2,): 1}) == 1
+
+    def test_min_bool(self):
+        k = NumKey(1, "a", "A", bool)
+        assert k.min({(1,): True, (2,): False}) is False
 
     def test_min_empty(self):
         k = NumKey(1, "a", "A", float)
         with pytest.raises(RegisterError, match="min requires at least one value"):
             k.min({})
 
-    def test_max(self):
+    def test_max_float(self):
         k = NumKey(1, "a", "A", float)
         assert k.max({(1,): 3.0, (2,): 1.0}) == 3.0
+
+    def test_max_int(self):
+        k = NumKey(1, "a", "A", int)
+        assert k.max({(1,): 3, (2,): 1}) == 3
+
+    def test_max_bool(self):
+        k = NumKey(1, "a", "A", bool)
+        assert k.max({(1,): True, (2,): False}) is True
 
     def test_max_empty(self):
         k = NumKey(1, "a", "A", float)
         with pytest.raises(RegisterError, match="max requires at least one value"):
             k.max({})
 
-    def test_range(self):
+    def test_range_float(self):
         k = NumKey(1, "a", "A", float)
         assert k.range({(1,): 1.0, (2,): 5.0}) == 4.0
+
+    def test_range_int(self):
+        k = NumKey(1, "a", "A", int)
+        assert k.range({(1,): 1, (2,): 5}) == 4
+
+    def test_range_bool(self):
+        k = NumKey(1, "a", "A", bool)
+        assert k.range({(1,): True, (2,): False}) == 1
 
     def test_range_empty(self):
         k = NumKey(1, "a", "A", float)
@@ -214,8 +259,8 @@ class TestDimensionKey:
         dim = Dimension("location", "地点", "L")
         k = DimensionKey(1, dim)
         assert k.id == 1
-        assert k.name == "location"
-        assert k.name_cn == "地点"
+        assert k.name == "locationId"
+        assert k.name_cn == "地点ID"
         assert k._dim is dim
 
     def test_min(self):
@@ -234,10 +279,22 @@ class TestDimensionKey:
         k = DimensionKey(1, dim)
         assert k.max({(1,): 3, (2,): 1}) == 3
 
+    def test_max_empty(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        with pytest.raises(RegisterError, match="max requires at least one value"):
+            k.max({})
+
     def test_range(self):
         dim = Dimension("location", "地点", "L")
         k = DimensionKey(1, dim)
         assert k.range({(1,): 1, (2,): 5}) == (1, 5)
+
+    def test_range_empty(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        with pytest.raises(RegisterError, match="range requires at least one value"):
+            k.range({})
 
     def test_sum_raises(self):
         dim = Dimension("location", "地点", "L")
@@ -250,6 +307,16 @@ class TestDimensionKey:
         k = DimensionKey(1, dim)
         with pytest.raises(NotImplementedError):
             k.mean({(1,): 1})
+
+    def test_validate(self):
+        from register import Register, Id
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        ref = Register()
+        ref[Id][dim,][1,] = 1
+        ref[Id][dim,][2,] = 2
+        result = k.validate({(1,): 1, (2,): 3}, reference=ref)
+        assert result == {(1,): True, (2,): False}
 
 
 class TestDimensionCollectionKey:
@@ -297,3 +364,17 @@ class TestDimensionCollectionKey:
         k = DimensionCollectionKey(1, dim)
         with pytest.raises(NotImplementedError):
             k.mean({(1,): [1, 2]})
+
+    def test_validate(self):
+        from register import Register, Id
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim)
+        ref = Register()
+        ref[Id][dim,][1,] = 1
+        ref[Id][dim,][2,] = 2
+        ref[Id][dim,][3,] = 3
+        result = k.validate(
+            {(1,): [1, 2], (2,): [1, 99], (3,): "bad"},
+            reference=ref,
+        )
+        assert result == {(1,): True, (2,): False, (3,): False}

@@ -10,7 +10,7 @@ class TestId:
         assert Id.id == 1
 
     def test_name(self):
-        assert Id.name == "id"
+        assert Id.name == "Id"
 
     def test_vtype(self):
         assert Id.vtype is int
@@ -24,7 +24,7 @@ class TestCode:
         assert Code.id == 2
 
     def test_name(self):
-        assert Code.name == "code"
+        assert Code.name == "Code"
 
 
 class TestName:
@@ -35,4 +35,4 @@ class TestName:
         assert Name.id == 3
 
     def test_name(self):
-        assert Name.name == "name"
+        assert Name.name == "Name"
