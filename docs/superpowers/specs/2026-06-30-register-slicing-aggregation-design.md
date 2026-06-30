@@ -394,8 +394,8 @@ class DimensionKey(_BaseKey):
             raise RegisterError("range requires at least one value")
         return max(args) - min(args)
 
-    def validate(self, *args: Any, **kwargs: Any) -> bool:
-        return all(isinstance(v, int) for v in args)
+    def validate(self, *args: Any, reg: Register, **kwargs: Any) -> bool:
+        return all(v in reg[Id][self._dim,] for v in args)
 ```
 
 ### Aggregation support matrix
@@ -529,7 +529,7 @@ class Register(Generic[K]):
             all_values = []
             for idx_dict in data.values():
                 all_values.extend(idx_dict.values())
-            rs &= key.validate(*all_values, **config)
+            rs &= key.validate(*all_values, reg=self, **config)
         return rs
 ```
 
