@@ -177,7 +177,7 @@ _METHOD_NAMES: dict[int, str] = {
 }
 ```
 
-`ALL` (0) is excluded from `_METHOD_NAMES` — it's a selector wildcard used by `select()`, not an aggregation method. It stays as a class attribute on Register.
+`ALL` (0) is removed from Register and excluded from `_METHOD_NAMES` — it was a selector wildcard, not an aggregation method. `select()` now uses `None` in the target tuple as the wildcard.
 
 ### Delegation flow
 
@@ -323,7 +323,6 @@ __all__ = [
 
 ```python
 class Register(Generic[K]):
-    ALL: Method = Method(0)   # selector wildcard, not an aggregation
     SUM: Method = Method(1)
     MAX: Method = Method(2)
     MIN: Method = Method(3)
@@ -346,9 +345,14 @@ class Register(Generic[K]):
     def __contains__(self, key: K) -> bool:
         return key in self._data
 
-    def select(self, key, dimension, target=None):
-        # Unchanged — iterates over index tuples
-        ...
+    def select(self, key: K, dimension: tuple[Dimension, ...],
+               target: tuple[int | None, ...] | None = None
+               ) -> Generator[tuple[int, ...], None, None]:
+        for index in self._data[key][dimension]:
+            if target is None:
+                yield index
+            elif all(j is None or i == j for i, j in zip(index, target)):
+                yield index
 
     def validate(self, **config: Any) -> bool:
         rs = True
@@ -360,7 +364,7 @@ class Register(Generic[K]):
         return rs
 ```
 
-`ALL` stays as a class attribute for `select()` wildcard matching. It is excluded from the agg dispatch table (`_METHOD_NAMES`).
+`ALL` is removed from Register — it was a selector wildcard, not an aggregation method. `select()` now uses `None` in the target tuple as the wildcard: `target = (1, None, 3)` means "match any" at position 2.
 
 ## KeyView Class
 
@@ -459,7 +463,7 @@ def _matches(idx_tuple: tuple[int, ...], pattern: tuple) -> bool:
 |------|---------|-----|
 | `DimensionAsKey` | Separate class wrapping inner dict | Removed — replaced by `KeyView` |
 | `Register._data` | `dict[K, DimensionAsKey]` via `defaultdict` | `dict[K, dict[tuple, dict[tuple, Any]]]` plain dict |
-| `Register.ALL` | `Method(0)` class attribute | Kept for `select()` wildcard, excluded from agg dispatch |
+| `Register.ALL` | `Method(0)` class attribute | Removed — `select()` uses `None` as wildcard |
 | `RegisterKey` methods | `(self, data, *args, **kwargs)` | `(self, *args, **kwargs)` — `data` removed |
 | New classes | — | `KeyView`, `IndexSpace`, `Selection` |
 | Slicing | Not supported | `int`, `list[int]`, `slice` in index tuples |
