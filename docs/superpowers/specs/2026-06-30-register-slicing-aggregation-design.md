@@ -523,11 +523,13 @@ class Register(Generic[K]):
             elif all(j is None or i == j for i, j in zip(index, target)):
                 yield index
 
-    def validate(self, **kwargs: Any) -> bool:
+    def validate(self, reference: Register | None = None, **kwargs: Any) -> bool:
+        if reference is None:
+            reference = self
         rs = True
         for key, dim_data in self._data.items():
             for dims, idx_dict in dim_data.items():
-                rs &= key.validate(*idx_dict.values(), reference=self, **kwargs)
+                rs &= key.validate(*idx_dict.values(), reference=reference, **kwargs)
         return rs
 ```
 
