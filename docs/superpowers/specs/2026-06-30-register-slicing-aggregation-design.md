@@ -369,14 +369,15 @@ class StrKey(_BaseKey):
 
 ### DimensionKey
 
-For dimension reference values (stored as int). Overrides `min`, `max`, `range`. `sum`, `mean` inherited from `_BaseKey` as `NotImplementedError`.
+For dimension reference values (stored as int). Takes a `Dimension` to derive identity. Overrides `min`, `max`, `range`. `sum`, `mean` inherited from `_BaseKey` as `NotImplementedError`.
 
 ```python
 class DimensionKey(_BaseKey):
     """Key for dimension values (always int)."""
 
-    def __init__(self, id: int, name: str, name_cn: str) -> None:
-        super().__init__(id, name, name_cn)
+    def __init__(self, id: int, dim: Dimension) -> None:
+        super().__init__(id, dim.name, dim.name_cn)
+        self._dim = dim
 
     def min(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
