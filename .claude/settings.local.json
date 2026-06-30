@@ -4,7 +4,13 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(poetry run *)",
-      "Bash(ruff check *)"
+      "Bash(ruff check *)",
+      "Bash(python -m pytest tests/test_key.py -v)",
+      "Bash(python -m pytest --tb=short)",
+      "Bash(python -m ruff check register/key.py tests/test_key.py)",
+      "Bash(python -m ruff check register/key.py tests/test_key.py register/__init__.py tests/conftest.py register/parameter.py)",
+      "Bash(python -m pytest --tb=line)",
+      "Bash(python -m pytest tests/test_register.py -v)"
     ]
   }
 }

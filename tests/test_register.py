@@ -1,355 +1,283 @@
-def test_method_class_exists():
-    from register.register import Method
+import pytest
+from register.register import _has_slice, _matches, _resolve, Selection
+from register import Register, NumKey, Dimension
 
-    m = Method(1)
-    assert int(m) == 1
 
+class TestHasSlice:
+    def test_all_ints(self):
+        assert _has_slice((1, 2, 3)) is False
 
-def test_method_equality():
-    from register.register import Method
+    def test_with_slice(self):
+        assert _has_slice((1, slice(None))) is True
 
-    m1 = Method(1)
-    m2 = Method(1)
-    m3 = Method(2)
-    assert m1 == m2
-    assert m1 != m3
+    def test_with_list(self):
+        assert _has_slice((1, [1, 2])) is True
 
+    def test_non_tuple(self):
+        assert _has_slice(1) is False
 
-def test_method_not_equal_to_int():
-    from register.register import Method
+    def test_non_tuple_slice(self):
+        assert _has_slice(slice(None)) is True
 
-    m = Method(1)
-    assert m != 1
-    assert m != "1"
 
+class TestMatches:
+    def test_exact_match(self):
+        assert _matches((1, 2), (1, 2)) is True
 
-def test_method_hashable():
-    from register.register import Method
+    def test_exact_no_match(self):
+        assert _matches((1, 3), (1, 2)) is False
 
-    m1 = Method(1)
-    m2 = Method(1)
-    assert hash(m1) == hash(m2)
-    {m1: "value"}  # Should not raise
+    def test_list_match(self):
+        assert _matches((1, 2), (1, [2, 3])) is True
 
+    def test_list_no_match(self):
+        assert _matches((1, 5), (1, [2, 3])) is False
 
-def test_register_all_method():
-    from register.register import Register
+    def test_slice_all(self):
+        assert _matches((1, 2), (slice(None), slice(None))) is True
 
-    assert int(Register.ALL) == 0
+    def test_slice_range_match(self):
+        assert _matches((2, 1), (slice(1, 3), slice(None))) is True
 
+    def test_slice_range_no_match(self):
+        assert _matches((3, 1), (slice(1, 3), slice(None))) is False
 
-def test_register_sum_method():
-    from register.register import Register
+    def test_slice_start_only(self):
+        assert _matches((5, 1), (slice(3, None), slice(None))) is True
 
-    assert int(Register.SUM) == 1
+    def test_slice_stop_only(self):
+        assert _matches((2, 1), (slice(None, 3), slice(None))) is True
 
 
-def test_register_max_method():
-    from register.register import Register
+class TestResolve:
+    def test_all(self):
+        data = {(1, 1): "a", (1, 2): "b", (2, 1): "c"}
+        result = _resolve((slice(None), slice(None)), data)
+        assert result == data
 
-    assert int(Register.MAX) == 2
+    def test_exact_first(self):
+        data = {(1, 1): "a", (1, 2): "b", (2, 1): "c"}
+        result = _resolve((1, slice(None)), data)
+        assert result == {(1, 1): "a", (1, 2): "b"}
 
+    def test_list_second(self):
+        data = {(1, 1): "a", (1, 2): "b", (2, 1): "c"}
+        result = _resolve((slice(None), [1]), data)
+        assert result == {(1, 1): "a", (2, 1): "c"}
 
-def test_register_min_method():
-    from register.register import Register
 
-    assert int(Register.MIN) == 3
-
-
-def test_register_range_method():
-    from register.register import Register
-
-    assert int(Register.RANGE) == 4
-
-
-def test_dimension_as_key_init():
-    from register.register import DimensionAsKey
-
-    dak = DimensionAsKey()
-    assert dak is not None
-
-
-def test_dimension_as_key_getitem_returns_dict():
-    from register.register import DimensionAsKey
-
-    dak = DimensionAsKey()
-    key = ("dim1", "dim2")
-    result = dak[key]
-    assert isinstance(result, dict)
-
-
-def test_dimension_as_key_iterable():
-    from register.register import DimensionAsKey
-
-    dak = DimensionAsKey()
-    key = ("dim1", "dim2")
-    _ = dak[key]
-    assert key in iter(dak)
-
-
-def test_dimension_as_key_pop_removes_key():
-    from register.register import DimensionAsKey
-
-    dak = DimensionAsKey()
-    key = ("dim1", "dim2")
-    _ = dak[key]
-    result = dak.pop(key)
-    assert result == {}
-    assert key not in iter(dak)
-
-
-def test_dimension_as_key_pop_nonexistent_returns_empty():
-    from register.register import DimensionAsKey
-
-    dak = DimensionAsKey()
-    result = dak.pop(("nonexistent",))
-    assert result == {}
-
-
-def test_register_getitem_returns_dimension_as_key():
-    from register.register import Register, DimensionAsKey
-    from register.parameter import Id
-
-    reg = Register()
-    result = reg[Id]
-    assert isinstance(result, DimensionAsKey)
-
-
-def test_register_iteration_yields_parameters():
-    from register.register import Register
-    from register.parameter import Id
-
-    reg = Register()
-    _ = reg[Id]
-    assert Id in iter(reg)
-
-
-def test_register_contains():
-    from register.register import Register
-    from register.parameter import Id, Code
-
-    reg = Register()
-    _ = reg[Id]
-    assert Id in reg
-    assert Code not in reg
-
-
-def test_register_store_and_retrieve_value():
-    from register.register import Register
-    from register.parameter import Id
-    from register.dimension import Dimension
-
-    reg = Register()
-    dim = Dimension("test", "测试", "TST")
-    reg[Id][(dim,)][(1,)] = 42
-    assert reg[Id][(dim,)][(1,)] == 42
-
-
-def test_select_returns_all_indices_when_target_none():
-    from register.register import Register
-    from register.parameter import Id
-    from register.dimension import Dimension
-
-    reg = Register()
-    dim = Dimension("test", "测试", "TST")
-    reg[Id][(dim,)][(1,)] = "a"
-    reg[Id][(dim,)][(2,)] = "b"
-    reg[Id][(dim,)][(3,)] = "c"
-    result = list(reg.select(Id, (dim,)))
-    assert result == [(1,), (2,), (3,)]
-
-
-def test_select_filters_by_exact_match():
-    from register.register import Register
-    from register.parameter import Id
-    from register.dimension import Dimension
-
-    reg = Register()
-    dim = Dimension("test", "测试", "TST")
-    reg[Id][(dim,)][(1,)] = "a"
-    reg[Id][(dim,)][(2,)] = "b"
-    result = list(reg.select(Id, (dim,), (1,)))
-    assert result == [(1,)]
-
-
-def test_select_filters_with_all_method():
-    from register.register import Register
-    from register.parameter import Id
-    from register.dimension import Dimension
-
-    reg = Register()
-    dim1 = Dimension("test1", "测试1", "T1")
-    dim2 = Dimension("test2", "测试2", "T2")
-    reg[Id][(dim1, dim2)][(1, 10)] = "a"
-    reg[Id][(dim1, dim2)][(1, 20)] = "b"
-    reg[Id][(dim1, dim2)][(2, 10)] = "c"
-    result = list(reg.select(Id, (dim1, dim2), (Register.ALL, 10)))
-    assert result == [(1, 10), (2, 10)]
-
-
-def test_select_with_multiple_dimensions():
-    from register.register import Register
-    from register.parameter import Id
-    from register.dimension import Dimension
-
-    reg = Register()
-    dim1 = Dimension("test1", "测试1", "T1")
-    dim2 = Dimension("test2", "测试2", "T2")
-    reg[Id][(dim1, dim2)][(1, 10)] = "a"
-    reg[Id][(dim1, dim2)][(1, 20)] = "b"
-    reg[Id][(dim1, dim2)][(2, 10)] = "c"
-    result = list(reg.select(Id, (dim1, dim2), (1, 10)))
-    assert result == [(1, 10)]
-
-
-# --- __repr__ tests ---
-
-
-def test_method_repr_known():
-    from register.register import Method
-
-    assert repr(Method(0)) == "ALL"
-    assert repr(Method(1)) == "SUM"
-    assert repr(Method(2)) == "MAX"
-    assert repr(Method(3)) == "MIN"
-    assert repr(Method(4)) == "RANGE"
-
-
-def test_method_repr_unknown():
-    from register.register import Method
-
-    assert repr(Method(99)) == "Method(99)"
-
-
-def test_dimension_as_key_repr_empty():
-    from register.register import DimensionAsKey
-
-    dak = DimensionAsKey()
-    assert repr(dak) == "DimensionAsKey(empty)"
-
-
-def test_dimension_as_key_repr_with_data():
-    from register.register import DimensionAsKey
-    from register.dimension import Dimension
-
-    dak = DimensionAsKey()
-    dim = Dimension("Region", "区域", "R")
-    dak[(dim,)][(1,)] = "a"
-    dak[(dim,)][(2,)] = "b"
-    result = repr(dak)
-    assert "Region" in result
-    assert "2" in result
-    assert result.startswith("DimensionAsKey(")
-
-
-def test_register_repr_empty():
-    from register.register import Register
-
-    reg = Register()
-    assert repr(reg) == "Register(empty)"
-
-
-def test_register_repr_with_data():
-    from register.register import Register
-    from register.parameter import Id, Name
-    from register.dimension import Dimension
-
-    reg = Register()
-    dim = Dimension("House", "仓", "W")
-    reg[Id][(dim,)][(1,)] = 1
-    reg[Id][(dim,)][(2,)] = 2
-    reg[Name][(dim,)][(1,)] = "Shanghai"
-
-    result = repr(reg)
-    assert "params=2" in result
-    assert "cells=3" in result
-    assert "id: 2" in result
-    assert "name: 1" in result
-
-
-# --- New tests from Task 6: MEAN, bounded TypeVar, and validate ---
-
-
-class TestMethodEnum:
-    def test_mean_exists(self) -> None:
-        from register.register import Method
-        assert Method(5) is not None
-
-    def test_mean_repr(self) -> None:
-        from register.register import Method
-        assert repr(Method(5)) == "MEAN"
-
-    def test_mean_equality(self) -> None:
-        from register.register import Method
-        assert Method(5) == Method(5)
-
-    def test_mean_inequality(self) -> None:
-        from register.register import Method
-        assert Method(5) != Method(1)
-
-    def test_all_methods(self) -> None:
-        from register.register import Method
-        names = {repr(Method(i)) for i in range(6)}
-        assert names == {"ALL", "SUM", "MAX", "MIN", "RANGE", "MEAN"}
-
-
-class TestRegisterClassMethods:
-    def test_mean_class_attr(self) -> None:
-        from register.register import Method, Register
-        assert Register.MEAN == Method(5)
-
-    def test_all_methods_present(self) -> None:
-        from register.register import Method, Register
-        assert Register.ALL == Method(0)
-        assert Register.SUM == Method(1)
-        assert Register.MAX == Method(2)
-        assert Register.MIN == Method(3)
-        assert Register.RANGE == Method(4)
-        assert Register.MEAN == Method(5)
-
-
-class TestRegisterValidate:
-    def test_validate_empty_register(self) -> None:
-        from register.register import Register
+class TestRegister:
+    def test_empty(self):
         reg = Register()
-        assert reg.validate() is True
+        assert repr(reg) == "Register(empty)"
 
-    def test_validate_valid_data(self) -> None:
-        from register.register import Register
-        from register.key import ParameterKey
+    def test_getitem_auto_init(self):
         reg = Register()
-        key = ParameterKey(1, "age", "年龄", int)
-        dak = reg[key]
-        dak[()][(1,)] = 25
-        dak[()][(2,)] = 30
-        assert reg.validate() is True
+        k = NumKey(1, "amount", "件量")
+        kv = reg[k]
+        assert repr(kv) == f"KeyView({k}, empty)"
 
-    def test_validate_invalid_data(self) -> None:
-        from register.register import Register
-        from register.key import ParameterKey
+    def test_contains(self):
         reg = Register()
-        key = ParameterKey(1, "age", "年龄", int)
-        dak = reg[key]
-        dak[()][(1,)] = 25
-        dak[()][(2,)] = "not an int"
-        assert reg.validate() is False
+        k = NumKey(1, "amount", "件量")
+        assert k not in reg
+        reg[k]  # auto-init
+        assert k in reg
 
-    def test_validate_multiple_keys(self) -> None:
-        from register.register import Register
-        from register.key import ParameterKey
+    def test_assign_and_get(self):
         reg = Register()
-        k1 = ParameterKey(1, "age", "年龄", int)
-        k2 = ParameterKey(2, "name", "名称", str)
-        reg[k1][()][(1,)] = 25
-        reg[k2][()][(1,)] = "Alice"
-        assert reg.validate() is True
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        assert reg[k][dim,][1,] == 10.0
 
-    def test_validate_one_key_invalid(self) -> None:
-        from register.register import Register
-        from register.key import ParameterKey
+    def test_repr(self):
         reg = Register()
-        k1 = ParameterKey(1, "age", "年龄", int)
-        k2 = ParameterKey(2, "name", "名称", str)
-        reg[k1][()][(1,)] = 25
-        reg[k2][()][(1,)] = 42
-        assert reg.validate() is False
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        assert "params=1" in repr(reg)
+        assert "cells=1" in repr(reg)
+
+
+class TestKeyView:
+    def test_getitem_auto_init(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        idx_space = reg[k][dim,]
+        assert repr(idx_space) == f"IndexSpace({k}, 0 entries)"
+
+    def test_iter(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        d1 = Dimension("loc", "地点", "L")
+        d2 = Dimension("owner", "所有者", "N")
+        reg[k][d1,][1,] = 1.0
+        reg[k][d2,][1,] = 2.0
+        dims = list(reg[k])
+        assert (d1,) in dims
+        assert (d2,) in dims
+
+    def test_pop(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        popped = reg[k].pop((dim,))
+        assert popped == {(1,): 10.0}
+        assert (dim,) not in list(reg[k])
+
+
+class TestIndexSpace:
+    def test_exact_getset(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        assert reg[k][dim,][1,] == 10.0
+
+    def test_contains(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        assert (1,) in reg[k][dim,]
+        assert (2,) not in reg[k][dim,]
+
+    def test_slice_returns_selection(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        reg[k][dim,][2,] = 20.0
+        sel = reg[k][dim,][:,]
+        assert isinstance(sel, Selection)
+
+    def test_update(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,].update({(1,): 10.0, (2,): 20.0})
+        assert reg[k][dim,][1,] == 10.0
+        assert reg[k][dim,][2,] == 20.0
+
+
+class TestSelection:
+    def setup_method(self):
+        self.reg = Register()
+        self.k = NumKey(1, "amount", "件量", float)
+        self.dim = Dimension("loc", "地点", "L")
+        self.reg[self.k][self.dim,][1,] = 1.0
+        self.reg[self.k][self.dim,][2,] = 2.0
+        self.reg[self.k][self.dim,][3,] = 3.0
+
+    def test_sum(self):
+        assert self.reg[self.k][self.dim,][:,].sum() == 6.0
+
+    def test_mean(self):
+        assert self.reg[self.k][self.dim,][:,].mean() == 2.0
+
+    def test_min(self):
+        assert self.reg[self.k][self.dim,][:,].min() == 1.0
+
+    def test_max(self):
+        assert self.reg[self.k][self.dim,][:,].max() == 3.0
+
+    def test_range(self):
+        assert self.reg[self.k][self.dim,][:,].range() == 2.0
+
+    def test_agg_sum(self):
+        assert self.reg[self.k][self.dim,][:,].agg(Register.SUM) == 6.0
+
+    def test_agg_mean(self):
+        assert self.reg[self.k][self.dim,][:,].agg(Register.MEAN) == 2.0
+
+    def test_partial_slice(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量", float)
+        d1 = Dimension("loc", "地点", "L")
+        d2 = Dimension("owner", "所有者", "N")
+        reg[k][d1, d2][1, 1] = 1.0
+        reg[k][d1, d2][1, 2] = 2.0
+        reg[k][d1, d2][2, 1] = 3.0
+        reg[k][d1, d2][2, 2] = 4.0
+        assert reg[k][d1, d2][1, :].sum() == 3.0
+        assert reg[k][d1, d2][2, :].sum() == 7.0
+
+    def test_list_selector(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量", float)
+        d1 = Dimension("loc", "地点", "L")
+        d2 = Dimension("owner", "所有者", "N")
+        reg[k][d1, d2][1, 1] = 1.0
+        reg[k][d1, d2][1, 2] = 2.0
+        reg[k][d1, d2][2, 1] = 3.0
+        reg[k][d1, d2][2, 2] = 4.0
+        reg[k][d1, d2][2, 3] = 5.0
+        assert reg[k][d1, d2][2, [1, 2]].sum() == 7.0
+
+
+class TestSelect:
+    def test_select_all(self):
+        reg = Register()
+        k = NumKey(1, "a", "A", int)
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10
+        reg[k][dim,][2,] = 20
+        indices = list(reg.select(k, (dim,)))
+        assert (1,) in indices
+        assert (2,) in indices
+
+    def test_select_with_target(self):
+        reg = Register()
+        k = NumKey(1, "a", "A", int)
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10
+        reg[k][dim,][2,] = 20
+        indices = list(reg.select(k, (dim,), target=(1,)))
+        assert indices == [(1,)]
+
+    def test_select_with_none_wildcard(self):
+        reg = Register()
+        k = NumKey(1, "a", "A", int)
+        d1 = Dimension("loc", "地点", "L")
+        d2 = Dimension("owner", "所有者", "N")
+        reg[k][d1, d2][1, 1] = 10
+        reg[k][d1, d2][1, 2] = 20
+        reg[k][d1, d2][2, 1] = 30
+        indices = list(reg.select(k, (d1, d2), target=(1, None)))
+        assert (1, 1) in indices
+        assert (1, 2) in indices
+        assert (2, 1) not in indices
+
+
+class TestValidate:
+    def test_validate_returns_register(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量", float)
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 1.0
+        reg[k][dim,][2,] = 2.0
+        result = reg.validate()
+        assert isinstance(result, Register)
+
+    def test_validate_all_valid(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量", float)
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 1.0
+        reg[k][dim,][2,] = 2.0
+        result = reg.validate()
+        assert result[k][dim,][1,] is True
+        assert result[k][dim,][2,] is True
+
+    def test_validate_some_invalid(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量", float)
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 1.0
+        reg[k][dim,][2,] = "bad"
+        result = reg.validate()
+        assert result[k][dim,][1,] is True
+        assert result[k][dim,][2,] is False
