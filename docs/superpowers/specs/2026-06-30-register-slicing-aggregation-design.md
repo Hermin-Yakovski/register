@@ -433,21 +433,17 @@ Name = StrKey(3, "name", "名称")
 
 ### Validate redesign
 
-Since `data` is removed, `validate` needs a different way to access stored values. Two options:
-
-1. **Keep `data` on `validate` only** — `validate` is semantically different from aggregation (it checks stored data, not selected values). Keep its signature as `validate(self, data, *args, **kwargs)`.
-2. **Pass values as `*args`** — call `key.validate(*all_values)` from `Register.validate()`, collecting all stored values for that key.
-
-**Decision:** Option 2 — `Register.validate()` collects all values for each key and passes them as `*args`. This keeps the ABC consistent.
+`Register.validate()` returns a new `Register` with the same keys and structure, where each cell is `True` (valid) or `False` (invalid). It validates each value individually by calling `key.validate({idx: value}, **kwargs)`.
 
 ```python
 # Register.validate()
-def validate(self, **kwargs: Any) -> bool:
-    rs = True
+def validate(self, **kwargs: Any) -> Register[K]:
+    result = Register[K]()
     for key in self._data:
         for dims in self._data[key]:
-            rs &= key.validate(self._data[key][dims], **kwargs)
-    return rs
+            for idx, value in self._data[key][dims].items():
+                result[key][dims][idx] = key.validate({idx: value}, **kwargs)
+    return result
 ```
 
 Validate is simpler now — each key type checks its own vtype directly (see Key Hierarchy section). No more `TypeError` fallback for Dimension instances since `DimensionKey` handles that case explicitly.
@@ -534,14 +530,13 @@ class Register(Generic[K]):
             elif all(j is None or i == j for i, j in zip(index, target)):
                 yield index
 
-    def validate(self, reference: Register | None = None, **kwargs: Any) -> bool:
-        if reference is None:
-            reference = self
-        rs = True
+    def validate(self, **kwargs: Any) -> Register[K]:
+        result = Register[K]()
         for key, dim_data in self._data.items():
             for dims, idx_dict in dim_data.items():
-                rs &= key.validate(idx_dict, reference=reference, **kwargs)
-        return rs
+                for idx, value in idx_dict.items():
+                    result[key][dims][idx] = key.validate({idx: value}, **kwargs)
+        return result
 ```
 
 `ALL` is removed from Register — it was a selector wildcard, not an aggregation method. `select()` now uses `None` in the target tuple as the wildcard: `target = (1, None, 3)` means "match any" at position 2.
