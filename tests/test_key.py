@@ -1,5 +1,5 @@
 import pytest
-from register.key import _BaseKey, RegisterKey, NumKey
+from register.key import _BaseKey, RegisterKey, NumKey, StrKey
 from register.exception import RegisterError
 
 
@@ -156,4 +156,53 @@ class TestNumKey:
     def test_validate_int(self):
         k = NumKey(1, "a", "A", int)
         result = k.validate({(1,): 5, (2,): 3.14})
+        assert result == {(1,): True, (2,): False}
+
+class TestStrKey:
+    def test_init(self):
+        k = StrKey(1, "name", "名称")
+        assert k.id == 1
+        assert k.name == "name"
+
+    def test_min(self):
+        k = StrKey(1, "a", "A")
+        assert k.min({(1,): "banana", (2,): "apple"}) == "apple"
+
+    def test_min_empty(self):
+        k = StrKey(1, "a", "A")
+        with pytest.raises(RegisterError, match="min requires at least one value"):
+            k.min({})
+
+    def test_max(self):
+        k = StrKey(1, "a", "A")
+        assert k.max({(1,): "banana", (2,): "apple"}) == "banana"
+
+    def test_max_empty(self):
+        k = StrKey(1, "a", "A")
+        with pytest.raises(RegisterError, match="max requires at least one value"):
+            k.max({})
+
+    def test_sum_raises(self):
+        k = StrKey(1, "a", "A")
+        with pytest.raises(NotImplementedError):
+            k.sum({(1,): "a"})
+
+    def test_mean_raises(self):
+        k = StrKey(1, "a", "A")
+        with pytest.raises(NotImplementedError):
+            k.mean({(1,): "a"})
+
+    def test_range_raises(self):
+        k = StrKey(1, "a", "A")
+        with pytest.raises(NotImplementedError):
+            k.range({(1,): "a"})
+
+    def test_validate_pass(self):
+        k = StrKey(1, "a", "A")
+        result = k.validate({(1,): "hello", (2,): "world"})
+        assert result == {(1,): True, (2,): True}
+
+    def test_validate_fail(self):
+        k = StrKey(1, "a", "A")
+        result = k.validate({(1,): "hello", (2,): 42})
         assert result == {(1,): True, (2,): False}

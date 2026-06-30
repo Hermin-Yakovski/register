@@ -131,3 +131,25 @@ class NumKey(_BaseKey):
         self, selection: dict[tuple[int, ...], Any], **kwargs: Any
     ) -> dict[tuple[int, ...], bool]:
         return {idx: isinstance(v, self.vtype) for idx, v in selection.items()}
+
+
+class StrKey(_BaseKey):
+    """Key for string values."""
+
+    def __init__(self, id: int, name: str, name_cn: str) -> None:
+        super().__init__(id, name, name_cn)
+
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("min requires at least one value")
+        return min(selection.values())
+
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("max requires at least one value")
+        return max(selection.values())
+
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
+        return {idx: isinstance(v, str) for idx, v in selection.items()}
