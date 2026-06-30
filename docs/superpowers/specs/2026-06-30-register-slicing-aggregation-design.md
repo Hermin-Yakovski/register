@@ -227,7 +227,7 @@ class RegisterKey(ABC):
     def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> bool: ...
+    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]: ...
 ```
 
 ## Key Hierarchy
@@ -333,8 +333,8 @@ class NumKey(_BaseKey):
             raise RegisterError("range requires at least one value")
         return max(selection.values()) - min(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> bool:
-        return all(isinstance(v, self.vtype) for v in selection.values())
+    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+        return {k: isinstance(v, self.vtype) for k, v in selection.items()}
 ```
 
 ### StrKey
@@ -358,8 +358,8 @@ class StrKey(_BaseKey):
             raise RegisterError("max requires at least one value")
         return max(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> bool:
-        return all(isinstance(v, str) for v in selection.values())
+    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+        return {k: isinstance(v, str) for k, v in selection.items()}
 ```
 
 ### DimensionKey
@@ -389,8 +389,8 @@ class DimensionKey(_BaseKey):
             raise RegisterError("range requires at least one value")
         return min(selection.values()), max(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> bool:
-        return all(v in reference[Id][self._dim,] for v in selection.values())
+    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> dict[tuple[int, ...], bool]:
+        return {k: v in reference[Id][self._dim,] for k, v in selection.items()}
 ```
 
 ### DimensionCollectionKey
@@ -408,8 +408,8 @@ class DimensionCollectionKey(_BaseKey):
         self._dim = dim
         self._iter_type = iter_type
 
-    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> bool:
-        return all(v in reference[Id][self._dim,] and isinstance(collection, self._iter_type) for collection in selection.values() for v in collection)
+    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> dict[tuple[int, ...], bool]:
+        return {k: isinstance(v, self._iter_type) and all(elem in reference[Id][self._dim,] for elem in v) for k, v in selection.items()}
 ```
 
 ### Aggregation support matrix
@@ -443,6 +443,7 @@ def validate(self, **kwargs: Any) -> Register[K]:
         for dims in self._data[key]:
             for idx, value in self._data[key][dims].items():
                 result[key][dims][idx] = key.validate({idx: value}, **kwargs)
+                
     return result
 ```
 
@@ -532,10 +533,9 @@ class Register(Generic[K]):
 
     def validate(self, **kwargs: Any) -> Register[K]:
         result = Register[K]()
-        for key, dim_data in self._data.items():
-            for dims, idx_dict in dim_data.items():
-                for idx, value in idx_dict.items():
-                    result[key][dims][idx] = key.validate({idx: value}, **kwargs)
+        for key in self._data:
+            for dims in self._data[key]:
+                result[key][dims].update(key.validate(self._data[key][dims], **kwargs))
         return result
 ```
 
@@ -595,6 +595,9 @@ class IndexSpace(Generic[K]):
 
     def __contains__(self, index: tuple[int, ...]) -> bool:
         return index in self._data
+
+    def update(self, other: dict[tuple[int, ...], Any]) -> None:
+        self._data.update(other)
 
     def __repr__(self) -> str:
         return f"IndexSpace({self._key}, {len(self._data)} entries)"
