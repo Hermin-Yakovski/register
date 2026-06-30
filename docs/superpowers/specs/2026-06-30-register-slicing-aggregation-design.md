@@ -251,9 +251,9 @@ Since `data` is removed, `validate` needs a different way to access stored value
 # Register.validate()
 def validate(self, **config: Any) -> bool:
     rs = True
-    for key, dim_data in self._data.items():
+    for key, data in self._data.items():
         all_values = []
-        for idx_dict in dim_data.values():
+        for idx_dict in data.values():
             all_values.extend(idx_dict.values())
         rs &= key.validate(*all_values, **config)
     return rs
@@ -356,9 +356,9 @@ class Register(Generic[K]):
 
     def validate(self, **config: Any) -> bool:
         rs = True
-        for key, dim_data in self._data.items():
+        for key, data in self._data.items():
             all_values = []
-            for idx_dict in dim_data.values():
+            for idx_dict in data.values():
                 all_values.extend(idx_dict.values())
             rs &= key.validate(*all_values, **config)
         return rs
@@ -373,9 +373,9 @@ class KeyView(Generic[K]):
     _key: K
     _data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]
 
-    def __init__(self, key: K, dim_data: dict) -> None:
+    def __init__(self, key: K, data: dict) -> None:
         self._key = key
-        self._data = dim_data
+        self._data = data
 
     def __getitem__(self, dims: tuple[Dimension, ...]) -> IndexSpace[K]:
         if dims not in self._data:
