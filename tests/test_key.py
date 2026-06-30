@@ -1,5 +1,6 @@
 import pytest
-from register.key import _BaseKey, RegisterKey, NumKey, StrKey
+from register.key import _BaseKey, RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey
+from register.dimension import Dimension
 from register.exception import RegisterError
 
 
@@ -206,3 +207,93 @@ class TestStrKey:
         k = StrKey(1, "a", "A")
         result = k.validate({(1,): "hello", (2,): 42})
         assert result == {(1,): True, (2,): False}
+
+
+class TestDimensionKey:
+    def test_init(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        assert k.id == 1
+        assert k.name == "location"
+        assert k.name_cn == "地点"
+        assert k._dim is dim
+
+    def test_min(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        assert k.min({(1,): 3, (2,): 1}) == 1
+
+    def test_min_empty(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        with pytest.raises(RegisterError):
+            k.min({})
+
+    def test_max(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        assert k.max({(1,): 3, (2,): 1}) == 3
+
+    def test_range(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        assert k.range({(1,): 1, (2,): 5}) == (1, 5)
+
+    def test_sum_raises(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        with pytest.raises(NotImplementedError):
+            k.sum({(1,): 1})
+
+    def test_mean_raises(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionKey(1, dim)
+        with pytest.raises(NotImplementedError):
+            k.mean({(1,): 1})
+
+
+class TestDimensionCollectionKey:
+    def test_init_default_list(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim)
+        assert k._iter_type is list
+
+    def test_init_set(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim, set)
+        assert k._iter_type is set
+
+    def test_init_invalid_type(self):
+        dim = Dimension("location", "地点", "L")
+        with pytest.raises(RegisterError, match="iter_type must be"):
+            DimensionCollectionKey(1, dim, dict)
+
+    def test_min_per_index(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim)
+        result = k.min({(1,): [3, 1, 2], (2,): [5, 4]})
+        assert result == {(1,): 1, (2,): 4}
+
+    def test_max_per_index(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim)
+        result = k.max({(1,): [3, 1, 2], (2,): [5, 4]})
+        assert result == {(1,): 3, (2,): 5}
+
+    def test_range_per_index(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim)
+        result = k.range({(1,): [3, 1, 2], (2,): [5, 4]})
+        assert result == {(1,): (1, 3), (2,): (4, 5)}
+
+    def test_sum_raises(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim)
+        with pytest.raises(NotImplementedError):
+            k.sum({(1,): [1, 2]})
+
+    def test_mean_raises(self):
+        dim = Dimension("location", "地点", "L")
+        k = DimensionCollectionKey(1, dim)
+        with pytest.raises(NotImplementedError):
+            k.mean({(1,): [1, 2]})

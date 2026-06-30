@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
+from .dimension import Dimension
 from .exception import RegisterError
 
 
@@ -153,3 +154,64 @@ class StrKey(_BaseKey):
         self, selection: dict[tuple[int, ...], Any], **kwargs: Any
     ) -> dict[tuple[int, ...], bool]:
         return {idx: isinstance(v, str) for idx, v in selection.items()}
+
+
+class DimensionKey(_BaseKey):
+    """Key for dimension values (always int)."""
+
+    def __init__(self, id: int, dim: Dimension) -> None:
+        super().__init__(id, dim.name, dim.name_cn)
+        self._dim = dim
+
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("min requires at least one value")
+        return min(selection.values())
+
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("max requires at least one value")
+        return max(selection.values())
+
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("range requires at least one value")
+        return min(selection.values()), max(selection.values())
+
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
+        from .parameter import Id
+
+        return {k: v in reference[Id][self._dim,] for k, v in selection.items()}
+
+
+class DimensionCollectionKey(_BaseKey):
+    """Key for collections of dimension values."""
+
+    def __init__(self, id: int, dim: Dimension, iter_type: type = list) -> None:
+        super().__init__(id, dim.name, dim.name_cn)
+        if iter_type not in (set, list, tuple):
+            raise RegisterError(f"iter_type must be set, list, or tuple, got {iter_type}")
+        self._dim = dim
+        self._iter_type = iter_type
+
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+        return {k: min(v) for k, v in selection.items()}
+
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+        return {k: max(v) for k, v in selection.items()}
+
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+        return {k: (min(v), max(v)) for k, v in selection.items()}
+
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
+        from .parameter import Id
+
+        return {
+            k: isinstance(v, self._iter_type)
+            and all(elem in reference[Id][self._dim,] for elem in v)
+            for k, v in selection.items()
+        }
