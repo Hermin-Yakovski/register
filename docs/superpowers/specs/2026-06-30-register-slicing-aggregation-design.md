@@ -403,23 +403,23 @@ class KeyView(Generic[K]):
 ```python
 class IndexSpace(Generic[K]):
     _key: K
-    _values: dict[tuple[int, ...], Any]
+    _data: dict[tuple[int, ...], Any]
 
-    def __init__(self, key: K, values: dict[tuple[int, ...], Any]) -> None:
+    def __init__(self, key: K, data: dict[tuple[int, ...], Any]) -> None:
         self._key = key
-        self._values = values
+        self._data = data
 
     def __getitem__(self, index: tuple) -> Any | Selection[K]:
         if _has_slice(index):
-            filtered = _resolve(index, self._values)
+            filtered = _resolve(index, self._data)
             return Selection(self._key, filtered)
-        return self._values[index]
+        return self._data[index]
 
     def __setitem__(self, index: tuple[int, ...], value: Any) -> None:
-        self._values[index] = value
+        self._data[index] = value
 
     def __repr__(self) -> str:
-        return f"IndexSpace({self._key}, {len(self._values)} entries)"
+        return f"IndexSpace({self._key}, {len(self._data)} entries)"
 
 
 def _has_slice(index: tuple) -> bool:
