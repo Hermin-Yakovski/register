@@ -7,7 +7,8 @@ from .dimension import Dimension
 from .key import RegisterKey
 
 if TYPE_CHECKING:
-    from typing import Generator, Iterator
+    from collections.abc import KeysView, ValuesView
+    from typing import Iterator
 
 
 K = TypeVar("K", bound=RegisterKey)
@@ -102,6 +103,23 @@ class IndexSpace(Generic[K]):
         dim_names = ",".join(repr(d) for d in self._dims)
         return f"IndexSpace({self._key}, ({dim_names}), {len(self._data)} entries)"
 
+    def keys(self) -> KeysView[tuple[int, ...]]:
+        return self._data.keys()
+
+    def values(self) -> ValuesView[Any]:
+        return self._data.values()
+
+    @property
+    def all(self) -> Selection[K]:
+        return self[tuple(slice(None) for _ in self._dims)]
+
+    @property
+    def first(self) -> tuple[tuple[int, ...], Any]:
+        return next(iter(self._data.items()))
+
+    def __len__(self) -> int:
+        return len(self._data)
+
 
 class KeyView(Generic[K]):
     _key: K
@@ -165,18 +183,6 @@ class Register(Generic[K]):
             total_cells += cell_count
             param_summaries.append(f"{param}: {cell_count}")
         return f"Register(params={len(self._data)}, cells={total_cells}, {{{', '.join(param_summaries)}}})"
-
-    def select(
-        self,
-        key: K,
-        dimension: tuple[Dimension, ...],
-        target: tuple[int | None, ...] | None = None,
-    ) -> Generator[tuple[int, ...], None, None]:
-        for index in self._data[key][dimension]:
-            if target is None:
-                yield index
-            elif all(j is None or i == j for i, j in zip(index, target)):
-                yield index
 
     def validate(self, **kwargs: Any) -> Register[K]:
         result: Register[K] = Register()

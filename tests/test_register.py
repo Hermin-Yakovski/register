@@ -175,6 +175,59 @@ class TestIndexSpace:
         assert reg[k][dim,][1,] == 10.0
         assert reg[k][dim,][2,] == 20.0
 
+    def test_keys(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        reg[k][dim,][2,] = 20.0
+        keys = reg[k][dim,].keys()
+        assert (1,) in keys
+        assert (2,) in keys
+        assert len(keys) == 2
+
+    def test_values(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        reg[k][dim,][2,] = 20.0
+        values = list(reg[k][dim,].values())
+        assert 10.0 in values
+        assert 20.0 in values
+        assert len(values) == 2
+
+    def test_all(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量", float)
+        d1 = Dimension("loc", "地点", "L")
+        d2 = Dimension("owner", "所有者", "N")
+        reg[k][d1, d2][1, 1] = 1.0
+        reg[k][d1, d2][1, 2] = 2.0
+        reg[k][d1, d2][2, 1] = 3.0
+        sel = reg[k][d1, d2].all
+        assert isinstance(sel, Selection)
+        assert sel.sum() == 6.0
+
+    def test_first(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        reg[k][dim,][1,] = 10.0
+        reg[k][dim,][2,] = 20.0
+        idx, val = reg[k][dim,].first
+        assert idx == (1,)
+        assert val == 10.0
+
+    def test_len(self):
+        reg = Register()
+        k = NumKey(1, "amount", "件量")
+        dim = Dimension("loc", "地点", "L")
+        assert len(reg[k][dim,]) == 0
+        reg[k][dim,][1,] = 10.0
+        reg[k][dim,][2,] = 20.0
+        assert len(reg[k][dim,]) == 2
+
 
 class TestSelection:
     def setup_method(self):
@@ -229,40 +282,6 @@ class TestSelection:
         reg[k][d1, d2][2, 2] = 4.0
         reg[k][d1, d2][2, 3] = 5.0
         assert reg[k][d1, d2][2, [1, 2]].sum() == 7.0
-
-
-class TestSelect:
-    def test_select_all(self):
-        reg = Register()
-        k = NumKey(1, "a", "A", int)
-        dim = Dimension("loc", "地点", "L")
-        reg[k][dim,][1,] = 10
-        reg[k][dim,][2,] = 20
-        indices = list(reg.select(k, (dim,)))
-        assert (1,) in indices
-        assert (2,) in indices
-
-    def test_select_with_target(self):
-        reg = Register()
-        k = NumKey(1, "a", "A", int)
-        dim = Dimension("loc", "地点", "L")
-        reg[k][dim,][1,] = 10
-        reg[k][dim,][2,] = 20
-        indices = list(reg.select(k, (dim,), target=(1,)))
-        assert indices == [(1,)]
-
-    def test_select_with_none_wildcard(self):
-        reg = Register()
-        k = NumKey(1, "a", "A", int)
-        d1 = Dimension("loc", "地点", "L")
-        d2 = Dimension("owner", "所有者", "N")
-        reg[k][d1, d2][1, 1] = 10
-        reg[k][d1, d2][1, 2] = 20
-        reg[k][d1, d2][2, 1] = 30
-        indices = list(reg.select(k, (d1, d2), target=(1, None)))
-        assert (1, 1) in indices
-        assert (1, 2) in indices
-        assert (2, 1) not in indices
 
 
 class TestValidate:
