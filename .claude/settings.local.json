@@ -10,7 +10,8 @@
       "Bash(python -m ruff check register/key.py tests/test_key.py)",
       "Bash(python -m ruff check register/key.py tests/test_key.py register/__init__.py tests/conftest.py register/parameter.py)",
       "Bash(python -m pytest --tb=line)",
-      "Bash(python -m pytest tests/test_register.py -v)"
+      "Bash(python -m pytest tests/test_register.py -v)",
+      "Bash(python -m pytest tests/test_parameter.py tests/test_init.py -v)"
     ]
   }
 }

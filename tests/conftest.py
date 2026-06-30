@@ -1,11 +1,6 @@
 import pytest
-from register import Register, Dimension
-from register.key import _BaseKey
-
-
-class _TestKey(_BaseKey):
-    """Minimal key for testing — replaces ParameterKey in conftest."""
-    pass
+from register import Register, NumKey, Dimension
+from register.parameter import Id
 
 
 @pytest.fixture
@@ -18,9 +13,14 @@ def empty_register():
 def sample_register():
     """Register populated with sample data."""
     reg = Register()
+    region = Dimension("region", "地区", "REG")
+    product = Dimension("product", "产品", "PRD")
 
-    # NOTE: sample_register fixtures will be rebuilt when ParameterKey is
-    # re-implemented. This placeholder keeps the fixture importable.
+    reg[Id][(region, product)][(1, 1)] = 1
+    reg[Id][(region, product)][(1, 2)] = 2
+    reg[Id][(region, product)][(2, 1)] = 3
+    reg[Id][(region, product)][(2, 2)] = 4
+
     return reg
 
 
@@ -31,12 +31,12 @@ def sample_dimension():
 
 
 @pytest.fixture
-def sample_parameter():
-    """Sample key for testing."""
-    return _TestKey(100, "test_param", "测试参数")
+def sample_num_key():
+    """Sample NumKey for testing."""
+    return NumKey(100, "test_param", "测试参数", int)
 
 
 @pytest.fixture
-def price_parameter():
-    """Price key with a float-like label."""
-    return _TestKey(4, "price", "价格")
+def price_key():
+    """Price NumKey with float type."""
+    return NumKey(4, "price", "价格", float)

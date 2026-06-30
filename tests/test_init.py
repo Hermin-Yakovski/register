@@ -1,55 +1,55 @@
-def test_import_register():
-    from register import Register
-
-    assert Register is not None
+import register
 
 
-def test_import_key_classes():
-    from register import RegisterKey, ParameterKey, PositionKey, IterableKey
+class TestExports:
+    def test_register(self):
+        assert hasattr(register, "Register")
 
-    assert RegisterKey is not None
-    assert ParameterKey is not None
-    assert PositionKey is not None
-    assert IterableKey is not None
+    def test_method(self):
+        assert hasattr(register, "Method")
 
+    def test_key_view(self):
+        assert hasattr(register, "KeyView")
 
-def test_import_dimension():
-    from register import Dimension
+    def test_index_space(self):
+        assert hasattr(register, "IndexSpace")
 
-    assert Dimension is not None
+    def test_selection(self):
+        assert hasattr(register, "Selection")
 
+    def test_register_key(self):
+        assert hasattr(register, "RegisterKey")
 
-def test_import_index():
-    from register import Index
+    def test_num_key(self):
+        assert hasattr(register, "NumKey")
 
-    assert Index is not None
+    def test_str_key(self):
+        assert hasattr(register, "StrKey")
 
+    def test_dimension_key(self):
+        assert hasattr(register, "DimensionKey")
 
-def test_import_metric():
-    from register import Metric
+    def test_dimension_collection_key(self):
+        assert hasattr(register, "DimensionCollectionKey")
 
-    assert Metric is not None
+    def test_no_parameter_key(self):
+        assert not hasattr(register, "ParameterKey")
 
+    def test_no_position_key(self):
+        assert not hasattr(register, "PositionKey")
 
-def test_import_common_parameters():
-    from register import Id, Code, Name
+    def test_no_iterable_key(self):
+        assert not hasattr(register, "IterableKey")
 
-    assert Id is not None
-    assert Code is not None
-    assert Name is not None
+    def test_no_dimension_as_key(self):
+        assert not hasattr(register, "DimensionAsKey")
 
-
-def test_import_exceptions():
-    from register import RegisterError, ValidationError, DimensionError
-
-    assert RegisterError is not None
-    assert ValidationError is not None
-    assert DimensionError is not None
-
-
-def test_import_from_exception_module():
-    from register.exception import RegisterError, ValidationError, DimensionError
-
-    assert RegisterError is not None
-    assert ValidationError is not None
-    assert DimensionError is not None
+    def test_all_exports(self):
+        expected = {
+            "Register", "Method", "KeyView", "IndexSpace", "Selection",
+            "RegisterKey", "NumKey", "StrKey", "DimensionKey", "DimensionCollectionKey",
+            "Dimension", "Index", "Metric",
+            "Id", "Code", "Name",
+            "RegisterError", "ValidationError", "DimensionError",
+        }
+        assert expected == set(register.__all__)
