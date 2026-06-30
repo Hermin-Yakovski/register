@@ -243,9 +243,7 @@ RegisterKey (ABC, public) — the protocol
 └── _BaseKey (private) — shared implementation + NotImplementedError defaults
     ├── NumKey          # overrides: sum, mean, min, max, range
     ├── StrKey          # overrides: min, max
-    ├── DimensionKey    # overrides: min, max, range
-    ├── PositionKey     # overrides: sum, mean, min, max, range
-    └── IterableKey     # overrides: sum, mean, min, max, range
+    └── DimensionKey    # overrides: min, max, range
 ```
 
 ### _BaseKey
@@ -405,8 +403,6 @@ class DimensionKey(_BaseKey):
 | NumKey | int, float, bool (caller specifies) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | StrKey | str (fixed) | ✗ | ✗ | ✓ lex | ✓ lex | ✗ |
 | DimensionKey | int (fixed) | ✗ | ✗ | ✓ | ✓ | ✓ |
-| PositionKey | numeric, fixed arity | ✓ | ✓ | ✓ | ✓ | ✓ |
-| IterableKey | any, variable length | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### parameter.py updates
 
@@ -443,8 +439,9 @@ Validate is simpler now — each key type checks its own vtype directly (see Key
 
 ```
 register/
-├── key.py          # RegisterKey, _BaseKey, NumKey, StrKey, DimensionKey, PositionKey, IterableKey
-│                   # Changed: ParameterKey split into NumKey/StrKey/DimensionKey, data param removed
+├── key.py          # RegisterKey, _BaseKey, NumKey, StrKey, DimensionKey
+│                   # Changed: ParameterKey removed, split into NumKey/StrKey/DimensionKey
+│                   #          PositionKey and IterableKey removed
 ├── register.py     # Register, Method, KeyView, IndexSpace, Selection
 │                   # Changed: DimensionAsKey removed, _data is plain nested dict
 ├── parameter.py    # Updated: Id→NumKey, Code/Name→StrKey
@@ -456,7 +453,7 @@ register/
 ## Updated Exports
 
 ```python
-from .key import RegisterKey, NumKey, StrKey, DimensionKey, PositionKey, IterableKey
+from .key import RegisterKey, NumKey, StrKey, DimensionKey
 from .register import Register, Method, KeyView, IndexSpace, Selection
 from .parameter import Id, Code, Name
 from .dimension import Dimension, Index, Metric
@@ -472,8 +469,6 @@ __all__ = [
     "NumKey",
     "StrKey",
     "DimensionKey",
-    "PositionKey",
-    "IterableKey",
     "Dimension",
     "Index",
     "Metric",
@@ -633,6 +628,7 @@ def _matches(idx_tuple: tuple[int, ...], pattern: tuple) -> bool:
 | `Register.ALL` | `Method(0)` class attribute | Removed — `select()` uses `None` as wildcard |
 | `RegisterKey` methods | `(self, data, *args, **kwargs)` | `(self, *args, **kwargs)` — `data` removed |
 | `ParameterKey` | One class handling int/float/str/Dimension | Split into `NumKey`, `StrKey`, `DimensionKey` |
+| `PositionKey`, `IterableKey` | Tuple and iterable key types | Removed — may be reintroduced later |
 | New classes | — | `KeyView`, `IndexSpace`, `Selection` |
 | Slicing | Not supported | `int`, `list[int]`, `slice` in index tuples |
 | Aggregation dispatch | Not supported | `Selection.agg(method, **kwargs)` |
