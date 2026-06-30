@@ -94,12 +94,8 @@ reg._data[Amount][(Location, Owner)][(1, 1)] == 1.1
 ### Resolution algorithm
 
 ```python
-def _resolve(index: tuple, values: dict[tuple[int, ...], Any]) -> list[Any]:
-    results = []
-    for idx_tuple, value in values.items():
-        if _matches(idx_tuple, index):
-            results.append(value)
-    return results
+def _resolve(index: tuple, data: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
+    return {k: v for k, v in data.items() if _matches(k, index)}
 
 def _matches(idx_tuple: tuple[int, ...], pattern: tuple) -> bool:
     for actual, selector in zip(idx_tuple, pattern):
@@ -138,31 +134,31 @@ Given data `{(1,1): 1.1, (1,2): 2.2, (2,1): 3.3, (2,2): 4.4, (2,3): 5.5}`:
 ```python
 class Selection(Generic[K]):
     _key: K
-    _values: list[Any]
+    _data: dict[tuple[int, ...], Any]
 
-    def __init__(self, key: K, values: list[Any]) -> None:
+    def __init__(self, key: K, data: dict[tuple[int, ...], Any]) -> None:
         self._key = key
-        self._values = values
+        self._data = data
 
     def sum(self, **kwargs: Any) -> Any:
-        return self._key.sum(*self._values, **kwargs)
+        return self._key.sum(*self._data.values(), **kwargs)
 
     def mean(self, **kwargs: Any) -> Any:
-        return self._key.mean(*self._values, **kwargs)
+        return self._key.mean(*self._data.values(), **kwargs)
 
     def min(self, **kwargs: Any) -> Any:
-        return self._key.min(*self._values, **kwargs)
+        return self._key.min(*self._data.values(), **kwargs)
 
     def max(self, **kwargs: Any) -> Any:
-        return self._key.max(*self._values, **kwargs)
+        return self._key.max(*self._data.values(), **kwargs)
 
     def range(self, **kwargs: Any) -> Any:
-        return self._key.range(*self._values, **kwargs)
+        return self._key.range(*self._data.values(), **kwargs)
 
     def agg(self, method: Method, **kwargs: Any) -> Any:
         name = _METHOD_NAMES[int(method)]
         fn = getattr(self._key, name)
-        return fn(*self._values, **kwargs)
+        return fn(*self._data.values(), **kwargs)
 ```
 
 ### Method dispatch table
@@ -616,15 +612,11 @@ def _has_slice(index: tuple) -> bool:
     return any(isinstance(elem, (slice, list)) for elem in index)
 
 
-def _resolve(index: tuple, values: dict[tuple[int, ...], Any]) -> list[Any]:
-    """Filter values by the index pattern, return matching values."""
+def _resolve(index: tuple, data: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
+    """Filter data by the index pattern, return matching entries."""
     if not isinstance(index, tuple):
         index = (index,)
-    results = []
-    for idx_tuple, value in values.items():
-        if _matches(idx_tuple, index):
-            results.append(value)
-    return results
+    return {k: v for k, v in data.items() if _matches(k, index)}
 
 
 def _matches(idx_tuple: tuple[int, ...], pattern: tuple) -> bool:
