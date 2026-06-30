@@ -241,9 +241,10 @@ class RegisterKey(ABC):
 ```
 RegisterKey (ABC, public) — the protocol
 └── _BaseKey (private) — shared implementation + NotImplementedError defaults
-    ├── NumKey          # overrides: sum, mean, min, max, range
-    ├── StrKey          # overrides: min, max
-    └── DimensionKey    # overrides: min, max, range
+    ├── NumKey                    # overrides: sum, mean, min, max, range
+    ├── StrKey                    # overrides: min, max
+    ├── DimensionKey              # overrides: min, max, range
+    └── DimensionCollectionKey    # overrides: sum, min, max, range
 ```
 
 ### _BaseKey
@@ -396,13 +397,62 @@ class DimensionKey(_BaseKey):
         return all(v in reference[Id][self._dim,] for v in args)
 ```
 
+### DimensionCollectionKey
+
+For collections (iterables) of dimension values. Like DimensionKey but each stored value is a container of dimension IDs. `iter_vtype` specifies the container type — choices are `set`, `list`, `tuple`, default `list`.
+
+```python
+class DimensionCollectionKey(_BaseKey):
+    """Key for collections of dimension values."""
+
+    def __init__(self, id: int, dim: Dimension, iter_vtype: type = list) -> None:
+        super().__init__(id, dim.name, dim.name_cn)
+        if iter_vtype not in (set, list, tuple):
+            raise RegisterError(f"iter_vtype must be set, list, or tuple, got {iter_vtype}")
+        self._dim = dim
+        self.iter_vtype = iter_vtype
+
+    def sum(self, *args: Any, **kwargs: Any) -> Any:
+        all_elements: set[Any] = set()
+        for collection in args:
+            all_elements.update(collection)
+        return self.iter_vtype(all_elements)
+
+    def min(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("min requires at least one value")
+        return min(elem for collection in args for elem in collection)
+
+    def max(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("max requires at least one value")
+        return max(elem for collection in args for elem in collection)
+
+    def range(self, *args: Any, **kwargs: Any) -> Any:
+        if not args:
+            raise RegisterError("range requires at least one value")
+        flat = [elem for collection in args for elem in collection]
+        return min(flat), max(flat)
+
+    def validate(self, *args: Any, reference: Register, **kwargs: Any) -> bool:
+        for collection in args:
+            try:
+                elements = iter(collection)
+            except TypeError:
+                return False
+            if not all(v in reference[Id][self._dim,] for v in elements):
+                return False
+        return True
+```
+
 ### Aggregation support matrix
 
 | Key Type | vtype | sum | mean | min | max | range |
 |----------|-------|-----|------|-----|-----|-------|
 | NumKey | int, float, bool (caller specifies) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | StrKey | str (fixed) | ✗ | ✗ | ✓ lex | ✓ lex | ✗ |
-| DimensionKey | int (fixed) | ✗ | ✗ | ✓ | ✓ | ✓ |
+| DimensionKey | int (fixed) | ✗ | ✗ | ✓ | ✓ | ✓ (min,max) |
+| DimensionCollectionKey | int (fixed), iter_vtype=set/list/tuple | ✓ union | ✗ | ✓ | ✓ | ✓ (min,max) |
 
 ### parameter.py updates
 
@@ -439,7 +489,7 @@ Validate is simpler now — each key type checks its own vtype directly (see Key
 
 ```
 register/
-├── key.py          # RegisterKey, _BaseKey, NumKey, StrKey, DimensionKey
+├── key.py          # RegisterKey, _BaseKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey
 │                   # Changed: ParameterKey removed, split into NumKey/StrKey/DimensionKey
 │                   #          PositionKey and IterableKey removed
 ├── register.py     # Register, Method, KeyView, IndexSpace, Selection
@@ -453,7 +503,7 @@ register/
 ## Updated Exports
 
 ```python
-from .key import RegisterKey, NumKey, StrKey, DimensionKey
+from .key import RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey
 from .register import Register, Method, KeyView, IndexSpace, Selection
 from .parameter import Id, Code, Name
 from .dimension import Dimension, Index, Metric
@@ -469,6 +519,7 @@ __all__ = [
     "NumKey",
     "StrKey",
     "DimensionKey",
+    "DimensionCollectionKey",
     "Dimension",
     "Index",
     "Metric",
@@ -579,6 +630,9 @@ class IndexSpace(Generic[K]):
 
     def __setitem__(self, index: tuple[int, ...], value: Any) -> None:
         self._data[index] = value
+
+    def __contains__(self, index: tuple[int, ...]) -> bool:
+        return index in self._data
 
     def __repr__(self) -> str:
         return f"IndexSpace({self._key}, {len(self._data)} entries)"
