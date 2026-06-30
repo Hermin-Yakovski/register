@@ -390,7 +390,7 @@ class DimensionKey(_BaseKey):
     def range(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
             raise RegisterError("range requires at least one value")
-        return max(args) - min(args)
+        return min(args), max(args)
 
     def validate(self, *args: Any, reference: Register, **kwargs: Any) -> bool:
         return all(v in reference[Id][self._dim,] for v in args)
