@@ -371,31 +371,31 @@ class Register(Generic[K]):
 ```python
 class KeyView(Generic[K]):
     _key: K
-    _dim_data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]
+    _data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]
 
     def __init__(self, key: K, dim_data: dict) -> None:
         self._key = key
-        self._dim_data = dim_data
+        self._data = dim_data
 
     def __getitem__(self, dims: tuple[Dimension, ...]) -> IndexSpace[K]:
-        if dims not in self._dim_data:
-            self._dim_data[dims] = {}
-        return IndexSpace(self._key, self._dim_data[dims])
+        if dims not in self._data:
+            self._data[dims] = {}
+        return IndexSpace(self._key, self._data[dims])
 
     def __iter__(self) -> Iterator[tuple[Dimension, ...]]:
-        return iter(self._dim_data)
+        return iter(self._data)
 
     def __repr__(self) -> str:
-        if not self._dim_data:
+        if not self._data:
             return f"KeyView({self._key}, empty)"
         parts = []
-        for dim_tuple, idx_dict in self._dim_data.items():
+        for dim_tuple, idx_dict in self._data.items():
             dim_names = ",".join(repr(d) for d in dim_tuple)
             parts.append(f"({dim_names}): {len(idx_dict)}")
         return f"KeyView({self._key}, {{{', '.join(parts)}}})"
 
     def pop(self, dims: tuple[Dimension, ...]) -> dict[tuple[int, ...], Any]:
-        return self._dim_data.pop(dims, {})
+        return self._data.pop(dims, {})
 ```
 
 ## IndexSpace Class
