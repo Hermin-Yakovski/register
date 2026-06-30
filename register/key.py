@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
+from .exception import RegisterError
+
 
 class RegisterKey(ABC):
     """Public protocol for any class used as a key in Register[K]."""
@@ -91,3 +93,41 @@ class _BaseKey(RegisterKey):
         self, selection: dict[tuple[int, ...], Any], **kwargs: Any
     ) -> dict[tuple[int, ...], bool]:
         raise NotImplementedError(f"validate not supported for {type(self).__name__}")
+
+
+class NumKey(_BaseKey):
+    """Key for numerical values (int, float, bool)."""
+
+    def __init__(self, id: int, name: str, name_cn: str, vtype: type = float) -> None:
+        super().__init__(id, name, name_cn)
+        if vtype not in (float, int, bool):
+            raise RegisterError(f"vtype must be float, int, or bool, got {vtype}")
+        self.vtype = vtype
+
+    def sum(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        return self.vtype(sum(selection.values()))
+
+    def mean(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("mean requires at least one value")
+        return sum(selection.values()) / len(selection)
+
+    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("min requires at least one value")
+        return min(selection.values())
+
+    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("max requires at least one value")
+        return max(selection.values())
+
+    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+        if not selection:
+            raise RegisterError("range requires at least one value")
+        return max(selection.values()) - min(selection.values())
+
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
+        return {idx: isinstance(v, self.vtype) for idx, v in selection.items()}

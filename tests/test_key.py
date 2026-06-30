@@ -1,5 +1,6 @@
 import pytest
-from register.key import _BaseKey, RegisterKey
+from register.key import _BaseKey, RegisterKey, NumKey
+from register.exception import RegisterError
 
 
 class ConcreteKey(_BaseKey):
@@ -69,3 +70,90 @@ class TestBaseKey:
     def test_is_register_key(self):
         k = ConcreteKey(1, "a", "A")
         assert isinstance(k, RegisterKey)
+
+
+class TestNumKey:
+    def test_init_default_float(self):
+        k = NumKey(1, "amount", "件量")
+        assert k.vtype is float
+
+    def test_init_int(self):
+        k = NumKey(1, "count", "计数", int)
+        assert k.vtype is int
+
+    def test_init_bool(self):
+        k = NumKey(1, "flag", "标志", bool)
+        assert k.vtype is bool
+
+    def test_init_invalid_vtype(self):
+        with pytest.raises(RegisterError, match="vtype must be float, int, or bool"):
+            NumKey(1, "bad", "坏", str)
+
+    def test_sum_float(self):
+        k = NumKey(1, "a", "A", float)
+        result = k.sum({(1,): 1.5, (2,): 2.5})
+        assert result == 4.0
+        assert isinstance(result, float)
+
+    def test_sum_int(self):
+        k = NumKey(1, "a", "A", int)
+        result = k.sum({(1,): 3, (2,): 7})
+        assert result == 10
+        assert isinstance(result, int)
+
+    def test_sum_empty(self):
+        k = NumKey(1, "a", "A", float)
+        result = k.sum({})
+        assert result == 0.0
+
+    def test_mean(self):
+        k = NumKey(1, "a", "A", float)
+        result = k.mean({(1,): 2.0, (2,): 4.0})
+        assert result == 3.0
+
+    def test_mean_empty(self):
+        k = NumKey(1, "a", "A", float)
+        with pytest.raises(RegisterError, match="mean requires at least one value"):
+            k.mean({})
+
+    def test_min(self):
+        k = NumKey(1, "a", "A", float)
+        assert k.min({(1,): 3.0, (2,): 1.0}) == 1.0
+
+    def test_min_empty(self):
+        k = NumKey(1, "a", "A", float)
+        with pytest.raises(RegisterError, match="min requires at least one value"):
+            k.min({})
+
+    def test_max(self):
+        k = NumKey(1, "a", "A", float)
+        assert k.max({(1,): 3.0, (2,): 1.0}) == 3.0
+
+    def test_max_empty(self):
+        k = NumKey(1, "a", "A", float)
+        with pytest.raises(RegisterError, match="max requires at least one value"):
+            k.max({})
+
+    def test_range(self):
+        k = NumKey(1, "a", "A", float)
+        assert k.range({(1,): 1.0, (2,): 5.0}) == 4.0
+
+    def test_range_empty(self):
+        k = NumKey(1, "a", "A", float)
+        with pytest.raises(RegisterError, match="range requires at least one value"):
+            k.range({})
+
+    def test_validate_pass(self):
+        k = NumKey(1, "a", "A", float)
+        result = k.validate({(1,): 1.0, (2,): 2.0})
+        assert result == {(1,): True, (2,): True}
+
+    def test_validate_fail(self):
+        k = NumKey(1, "a", "A", float)
+        result = k.validate({(1,): 1.0, (2,): "bad"})
+        assert result == {(1,): True, (2,): False}
+
+    def test_validate_int(self):
+        k = NumKey(1, "a", "A", int)
+        result = k.validate({(1,): 5, (2,): 3.14})
+        assert result == {(1,): True, (2,): False}
