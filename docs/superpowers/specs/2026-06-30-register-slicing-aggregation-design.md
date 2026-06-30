@@ -250,17 +250,20 @@ RegisterKey (ABC, public) — the protocol
 
 ### NumKey
 
-For numerical types (int, float, bool). Takes a `vtype` parameter to specify which numeric type.
+For numerical types. `vtype` is dedicated to NumKey — choices are `float`, `int`, `bool`, default `float`.
 
 ```python
 class NumKey(_BaseKey):
     """Key for numerical values (int, float, bool)."""
 
-    def __init__(self, id: int, name: str, name_cn: str, vtype: type) -> None:
-        super().__init__(id, name, name_cn, vtype)
+    def __init__(self, id: int, name: str, name_cn: str, vtype: type = float) -> None:
+        super().__init__(id, name, name_cn)
+        if vtype not in (float, int, bool):
+            raise RegisterError(f"NumKey vtype must be float, int, or bool, got {vtype}")
+        self.vtype = vtype
 
     def sum(self, *args: Any, **kwargs: Any) -> Any:
-        return sum(args)
+        return self.vtype(sum(args))
 
     def mean(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
@@ -283,8 +286,6 @@ class NumKey(_BaseKey):
         return max(args) - min(args)
 
     def validate(self, *args: Any, **kwargs: Any) -> bool:
-        if self.vtype is None:
-            return True
         return all(isinstance(v, self.vtype) for v in args)
 ```
 
@@ -297,7 +298,7 @@ class StrKey(_BaseKey):
     """Key for string values."""
 
     def __init__(self, id: int, name: str, name_cn: str) -> None:
-        super().__init__(id, name, name_cn, vtype=str)
+        super().__init__(id, name, name_cn)
 
     def sum(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("sum not supported for StrKey")
@@ -331,7 +332,7 @@ class DimensionKey(_BaseKey):
     """Key for dimension values (always int)."""
 
     def __init__(self, id: int, name: str, name_cn: str) -> None:
-        super().__init__(id, name, name_cn, vtype=int)
+        super().__init__(id, name, name_cn)
 
     def sum(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("sum not supported for DimensionKey")
