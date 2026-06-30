@@ -429,13 +429,11 @@ Since `data` is removed, `validate` needs a different way to access stored value
 
 ```python
 # Register.validate()
-def validate(self, **config: Any) -> bool:
+def validate(self, **kwargs: Any) -> bool:
     rs = True
-    for key, data in self._data.items():
-        all_values = []
-        for idx_dict in data.values():
-            all_values.extend(idx_dict.values())
-        rs &= key.validate(*all_values, **config)
+    for key in self._data:
+        for dims in self._data[key]:
+            rs &= key.validate(*self._data[key][dims].values(), **kwargs)
     return rs
 ```
 
