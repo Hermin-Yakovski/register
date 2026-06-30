@@ -240,12 +240,65 @@ class RegisterKey(ABC):
 
 ```
 RegisterKey (ABC, public) — the protocol
-└── _BaseKey (private) — shared implementation
-    ├── NumKey          # int, float, bool — sum, mean, min, max, range
-    ├── StrKey          # str — min, max only
-    ├── DimensionKey    # dimension values (int) — min, max, range
-    ├── PositionKey     # tuples of fixed arity
-    └── IterableKey     # variable-length iterables
+└── _BaseKey (private) — shared implementation + NotImplementedError defaults
+    ├── NumKey          # overrides: sum, mean, min, max, range
+    ├── StrKey          # overrides: min, max
+    ├── DimensionKey    # overrides: min, max, range
+    ├── PositionKey     # overrides: sum, mean, min, max, range
+    └── IterableKey     # overrides: sum, mean, min, max, range
+```
+
+### _BaseKey
+
+Provides identity fields, dunder methods, and default `NotImplementedError` for all aggregation methods. Subclasses override only what they support.
+
+```python
+class _BaseKey(RegisterKey):
+    """Internal base — not exported."""
+
+    def __init__(self, id: int, name: str, name_cn: str) -> None:
+        self._id = id
+        self._name = name
+        self._name_cn = name_cn
+
+    def __str__(self) -> str:
+        return self._name
+
+    def __repr__(self) -> str:
+        return self._name
+
+    def __hash__(self) -> int:
+        return hash(self._id)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, self.__class__) and self._id == getattr(other, "_id", None)
+
+    @property
+    def id(self) -> int:
+        return self._id
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def name_cn(self) -> str:
+        return self._name_cn
+
+    def sum(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError(f"sum not supported for {type(self).__name__}")
+
+    def mean(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError(f"mean not supported for {type(self).__name__}")
+
+    def min(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError(f"min not supported for {type(self).__name__}")
+
+    def max(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError(f"max not supported for {type(self).__name__}")
+
+    def range(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError(f"range not supported for {type(self).__name__}")
 ```
 
 ### NumKey
@@ -291,7 +344,7 @@ class NumKey(_BaseKey):
 
 ### StrKey
 
-For string values. Only `min` and `max` (lexicographic) are supported.
+For string values. Overrides `min` and `max` (lexicographic). `sum`, `mean`, `range` inherited from `_BaseKey` as `NotImplementedError`.
 
 ```python
 class StrKey(_BaseKey):
@@ -299,12 +352,6 @@ class StrKey(_BaseKey):
 
     def __init__(self, id: int, name: str, name_cn: str) -> None:
         super().__init__(id, name, name_cn)
-
-    def sum(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("sum not supported for StrKey")
-
-    def mean(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("mean not supported for StrKey")
 
     def min(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
@@ -316,16 +363,13 @@ class StrKey(_BaseKey):
             raise RegisterError("max requires at least one value")
         return max(args)
 
-    def range(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("range not supported for StrKey")
-
     def validate(self, *args: Any, **kwargs: Any) -> bool:
         return all(isinstance(v, str) for v in args)
 ```
 
 ### DimensionKey
 
-For dimension reference values (stored as int). Supports `min`, `max`, `range`.
+For dimension reference values (stored as int). Overrides `min`, `max`, `range`. `sum`, `mean` inherited from `_BaseKey` as `NotImplementedError`.
 
 ```python
 class DimensionKey(_BaseKey):
@@ -333,12 +377,6 @@ class DimensionKey(_BaseKey):
 
     def __init__(self, id: int, name: str, name_cn: str) -> None:
         super().__init__(id, name, name_cn)
-
-    def sum(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("sum not supported for DimensionKey")
-
-    def mean(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("mean not supported for DimensionKey")
 
     def min(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
