@@ -399,24 +399,24 @@ class DimensionKey(_BaseKey):
 
 ### DimensionCollectionKey
 
-For collections (iterables) of dimension values. Like DimensionKey but each stored value is a container of dimension IDs. `iter_vtype` specifies the container type — choices are `set`, `list`, `tuple`, default `list`.
+For collections (iterables) of dimension values. Like DimensionKey but each stored value is a container of dimension IDs. `_iter_type` specifies the container type — choices are `set`, `list`, `tuple`, default `list`.
 
 ```python
 class DimensionCollectionKey(_BaseKey):
     """Key for collections of dimension values."""
 
-    def __init__(self, id: int, dim: Dimension, iter_vtype: type = list) -> None:
+    def __init__(self, id: int, dim: Dimension, iter_type: type = list) -> None:
         super().__init__(id, dim.name, dim.name_cn)
-        if iter_vtype not in (set, list, tuple):
-            raise RegisterError(f"iter_vtype must be set, list, or tuple, got {iter_vtype}")
+        if iter_type not in (set, list, tuple):
+            raise RegisterError(f"iter_type must be set, list, or tuple, got {iter_type}")
         self._dim = dim
-        self.iter_vtype = iter_vtype
+        self._iter_type = iter_type
 
     def sum(self, *args: Any, **kwargs: Any) -> Any:
         all_elements: set[Any] = set()
         for collection in args:
             all_elements.update(collection)
-        return self.iter_vtype(all_elements)
+        return self._iter_type(all_elements)
 
     def min(self, *args: Any, **kwargs: Any) -> Any:
         if not args:
@@ -435,7 +435,7 @@ class DimensionCollectionKey(_BaseKey):
         return min(flat), max(flat)
 
     def validate(self, *args: Any, reference: Register, **kwargs: Any) -> bool:
-        return all(v in reference[Id][self._dim,] for collection in args for v in collection)
+        return all(v in reference[Id][self._dim,] and isinstance(collection, self._iter_type) for collection in args for v in collection)
 ```
 
 ### Aggregation support matrix
@@ -445,7 +445,7 @@ class DimensionCollectionKey(_BaseKey):
 | NumKey | int, float, bool (caller specifies) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | StrKey | str (fixed) | ✗ | ✗ | ✓ lex | ✓ lex | ✗ |
 | DimensionKey | int (fixed) | ✗ | ✗ | ✓ | ✓ | ✓ (min,max) |
-| DimensionCollectionKey | int (fixed), iter_vtype=set/list/tuple | ✓ union | ✗ | ✓ | ✓ | ✓ (min,max) |
+| DimensionCollectionKey | int (fixed), _iter_type=set/list/tuple | ✓ union | ✗ | ✓ | ✓ | ✓ (min,max) |
 
 ### parameter.py updates
 
