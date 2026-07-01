@@ -127,7 +127,7 @@ class DelegableMethod(Protocol):
 
 class DelegationWrapper(Protocol):
     """Protocol for the wrapper returned by Selection.__getattr__."""
-    def __call__(self, **kwargs: Any) -> Any: ...
+    def __call__(self, *, **kwargs: Any) -> Any: ...
 
 F = TypeVar("F", bound=DelegableMethod)
 W = TypeVar("W", bound=DelegationWrapper)
