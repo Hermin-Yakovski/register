@@ -113,9 +113,8 @@ The `@delegable` decorator marks methods as aggregation functions that `Selectio
 ### Definition
 
 ```python
-from typing import Any, Protocol, runtime_checkable, TypeVar
+from typing import Any, Protocol, TypeVar
 
-@runtime_checkable
 class DelegableMethod(Protocol):
     """Protocol for a delegable method on a RegisterKey subclass."""
     def __call__(
@@ -125,7 +124,6 @@ class DelegableMethod(Protocol):
         **kwargs: Any,
     ) -> Any: ...
 
-@runtime_checkable
 class DelegationWrapper(Protocol):
     """Protocol for the wrapper returned by Selection.__getattr__."""
     def __call__(self, **kwargs: Any) -> Any: ...
