@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Protocol, TypeVar
+from typing import Any, Callable, Protocol, TypeVar
 
 from .dimension import Dimension
 from .exception import RegisterError
@@ -15,7 +15,7 @@ class DelegableMethod(Protocol):
     def __call__(self, key: RegisterKey, selected: Selected, **kwargs: Any) -> Any: ...
 
 
-F = TypeVar("F", bound=DelegableMethod)
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def delegable(fn: F) -> F:

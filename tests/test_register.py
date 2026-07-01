@@ -306,7 +306,6 @@ class TestSelection:
         """Delegable method works with proxy — kwargs passed through."""
         from register.key import _BaseKey, delegable, Selected
         from register import Dimension
-        from typing import Any
 
         class MockKey(_BaseKey):
             @delegable
