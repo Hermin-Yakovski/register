@@ -128,10 +128,6 @@ class DelegableMethod(Protocol):
         **kwargs: Any,
     ) -> Any: ...
 
-class DelegationWrapper(Protocol):
-    """Protocol for the wrapper returned by Selection.__getattr__."""
-    def __call__(self, *, **kwargs: Any) -> Any: ...
-
 F = TypeVar("F", bound=DelegableMethod)
 
 def delegable(fn: F) -> F:
@@ -140,7 +136,7 @@ def delegable(fn: F) -> F:
     The decorated method must accept (self, selected, *, ...) where
     selected: Selected is injected by the proxy.
 
-    Selection.__getattr__ returns a DelegationWrapper with signature:
+    Selection.__getattr__ returns a wrapper with signature:
         def wrapper(**kwargs: Any) -> Any
     that calls fn(key_instance, self._data, **kwargs).
     """
