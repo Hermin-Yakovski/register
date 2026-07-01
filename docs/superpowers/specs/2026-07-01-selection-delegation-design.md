@@ -46,7 +46,7 @@ sel.sum()   # on MatrixKey with no @delegable sum
   ↓
 Selection.__getattr__('sum')
   ↓
-fn = getattr(self._key, 'sum')        # found, but _delegable is False
+fn = getattr(self._key, 'sum')        # found, but _register_key_delegable is False
   ↓
 AttributeError: "MatrixKey has no delegable method 'sum'"
 ```
@@ -70,7 +70,7 @@ class Selection(Generic[K]):
         if name.startswith('_'):
             raise AttributeError(name)
         fn = getattr(self._key, name)
-        if not callable(fn) or not getattr(fn, '_delegable', False):
+        if not callable(fn) or not getattr(fn, '_register_key_delegable', False):
             raise AttributeError(
                 f"{type(self._key).__name__} has no delegable method '{name}'"
             )
@@ -113,15 +113,25 @@ The `@delegable` decorator marks methods as aggregation functions that `Selectio
 ### Definition
 
 ```python
-from typing import Callable
+from typing import Any, Callable, TypeVar
 
-def delegable(fn: Callable) -> Callable:
+# Type aliases for the two callables involved
+DelegableMethod = Callable[..., Any]            # the method on the key class
+DelegationWrapper = Callable[..., Any]          # the wrapper returned by Selection.__getattr__
+
+F = TypeVar("F", bound=DelegableMethod)
+
+def delegable(fn: F) -> F:
     """Mark a method as a delegable aggregation function.
 
-    Delegable methods follow the signature:
-        def method(self, selected: dict[tuple[int, ...], Any], *, ...) -> Any
+    The decorated method must accept (self, selected, *, ...) where
+    selected: dict[tuple[int, ...], Any] is injected by the proxy.
+
+    Selection.__getattr__ returns a wrapper with signature:
+        def wrapper(**kwargs: Any) -> Any
+    that calls fn(key_instance, self._data, **kwargs).
     """
-    fn._delegable = True
+    fn._register_key_delegable = True
     return fn
 ```
 
@@ -466,7 +476,7 @@ register/
 │                   # delegable: new decorator function
 │                   # _BaseKey: parameter rename selection → selected, add @delegable
 │                   # NumKey/StrKey/DimensionKey/DimensionCollectionKey: @delegable, remove **kwargs
-├── register.py     # Selection: rewrite as __getattr__ proxy, add _dims, check _delegable
+├── register.py     # Selection: rewrite as __getattr__ proxy, add _dims, check _register_key_delegable
 │                   # Method class: removed
 │                   # _METHOD_NAMES dict: removed
 │                   # Register: remove SUM/MAX/MIN/RANGE/MEAN class attributes
@@ -539,4 +549,4 @@ __all__ = [
 - `TestSelection.test_proxy_undefined_raises` — calling a nonexistent method raises `AttributeError`
 - `TestSelection.test_proxy_private_raises` — `_`-prefixed attributes are not proxied
 - `TestSelection.test_proxy_concrete_kwargs` — delegable method accepts concrete keyword arguments
-- `TestDelegable.test_marks_function` — `@delegable` sets `_delegable = True` on the function
+- `TestDelegable.test_marks_function` — `@delegable` sets `_register_key_delegable = True` on the function
