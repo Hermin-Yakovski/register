@@ -59,9 +59,9 @@ AttributeError: "MatrixKey has no delegable method 'sum'"
 class Selection(Generic[K]):
     _key: K
     _dims: tuple[Dimension, ...]
-    _data: dict[tuple[int, ...], Any]
+    _data: Selected
 
-    def __init__(self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]) -> None:
+    def __init__(self, key: K, dims: tuple[Dimension, ...], data: Selected) -> None:
         self._key = key
         self._dims = dims
         self._data = data
@@ -115,12 +115,15 @@ The `@delegable` decorator marks methods as aggregation functions that `Selectio
 ```python
 from typing import Any, Protocol, TypeVar
 
+# Type alias for the selected data dict
+Selected = Selected
+
 class DelegableMethod(Protocol):
     """Protocol for a delegable method on a RegisterKey subclass."""
     def __call__(
         self,
         key: RegisterKey,
-        selected: dict[tuple[int, ...], Any],
+        selected: Selected,
         *,
         **kwargs: Any,
     ) -> Any: ...
@@ -136,7 +139,7 @@ def delegable(fn: F) -> F:
     """Mark a method as a delegable aggregation function.
 
     The decorated method must accept (self, selected, *, ...) where
-    selected: dict[tuple[int, ...], Any] is injected by the proxy.
+    selected: Selected is injected by the proxy.
 
     Selection.__getattr__ returns a DelegationWrapper with signature:
         def wrapper(**kwargs: Any) -> Any
@@ -152,7 +155,7 @@ Every delegable method must follow this pattern:
 
 ```python
 @delegable
-def method(self, selected: dict[tuple[int, ...], Any], *, param1: type1, param2: type2 = default) -> ReturnType:
+def method(self, selected: Selected, *, param1: type1, param2: type2 = default) -> ReturnType:
     ...
 ```
 
@@ -164,7 +167,7 @@ def method(self, selected: dict[tuple[int, ...], Any], *, param1: type1, param2:
 
 ### Where it lives
 
-`delegable` is defined in `key.py` and exported from the package. Both internal key types (`_BaseKey` subclasses) and external key types use it.
+`delegable` and `Selected` are defined in `key.py` and exported from the package. Both internal key types (`_BaseKey` subclasses) and external key types use them.
 
 ## RegisterKey ABC Redesign
 
@@ -188,7 +191,7 @@ class RegisterKey(ABC):
 
     @abstractmethod
     def validate(
-        self, selected: dict[tuple[int, ...], Any], **kwargs: Any
+        self, selected: Selected, **kwargs: Any
     ) -> dict[tuple[int, ...], bool]: ...
 ```
 
@@ -246,27 +249,27 @@ class _BaseKey(RegisterKey):
 
     # Standard aggregation defaults — convenience, not obligation
     @delegable
-    def sum(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def sum(self, selected: Selected) -> Any:
         raise NotImplementedError(f"sum not supported for {type(self).__name__}")
 
     @delegable
-    def mean(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def mean(self, selected: Selected) -> Any:
         raise NotImplementedError(f"mean not supported for {type(self).__name__}")
 
     @delegable
-    def min(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def min(self, selected: Selected) -> Any:
         raise NotImplementedError(f"min not supported for {type(self).__name__}")
 
     @delegable
-    def max(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def max(self, selected: Selected) -> Any:
         raise NotImplementedError(f"max not supported for {type(self).__name__}")
 
     @delegable
-    def range(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def range(self, selected: Selected) -> Any:
         raise NotImplementedError(f"range not supported for {type(self).__name__}")
 
     def validate(
-        self, selected: dict[tuple[int, ...], Any], **kwargs: Any
+        self, selected: Selected, **kwargs: Any
     ) -> dict[tuple[int, ...], bool]:
         raise NotImplementedError(f"validate not supported for {type(self).__name__}")
 ```
@@ -291,15 +294,15 @@ class MatrixKey(RegisterKey):
     @property
     def name_cn(self): return self._name_cn
 
-    def validate(self, selected: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, np.ndarray) for k, v in selected.items()}
 
     @delegable
-    def tr(self, selected: dict[tuple[int, ...], Any]) -> float:
+    def tr(self, selected: Selected) -> float:
         return sum(v.trace() for v in selected.values())
 
     @delegable
-    def det(self, selected: dict[tuple[int, ...], Any], *, method: str = "lu") -> dict[tuple[int, ...], float]:
+    def det(self, selected: Selected, *, method: str = "lu") -> dict[tuple[int, ...], float]:
         return {k: np.linalg.det(v) for k, v in selected.items()}
     # No sum, mean, min, max, range — AttributeError if called via Selection
 ```
@@ -361,34 +364,34 @@ class NumKey(_BaseKey):
         self.vtype = vtype
 
     @delegable
-    def sum(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def sum(self, selected: Selected) -> Any:
         return self.vtype(sum(selected.values()))
 
     @delegable
-    def mean(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def mean(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("mean requires at least one value")
         return sum(selected.values()) / len(selected)
 
     @delegable
-    def min(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def min(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("min requires at least one value")
         return self.vtype(min(selected.values()))
 
     @delegable
-    def max(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def max(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("max requires at least one value")
         return self.vtype(max(selected.values()))
 
     @delegable
-    def range(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def range(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("range requires at least one value")
         return self.vtype(max(selected.values()) - min(selected.values()))
 
-    def validate(self, selected: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         return {idx: isinstance(v, self.vtype) for idx, v in selected.items()}
 ```
 
@@ -397,18 +400,18 @@ class NumKey(_BaseKey):
 ```python
 class StrKey(_BaseKey):
     @delegable
-    def min(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def min(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("min requires at least one value")
         return min(selected.values())
 
     @delegable
-    def max(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def max(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("max requires at least one value")
         return max(selected.values())
 
-    def validate(self, selected: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, str) for k, v in selected.items()}
 ```
 
@@ -421,24 +424,24 @@ class DimensionKey(_BaseKey):
         self._dim = dim
 
     @delegable
-    def min(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def min(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("min requires at least one value")
         return min(selected.values())
 
     @delegable
-    def max(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def max(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("max requires at least one value")
         return max(selected.values())
 
     @delegable
-    def range(self, selected: dict[tuple[int, ...], Any]) -> Any:
+    def range(self, selected: Selected) -> Any:
         if not selected:
             raise RegisterError("range requires at least one value")
         return min(selected.values()), max(selected.values())
 
-    def validate(self, selected: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
         reference = kwargs["reference"]
         return {k: (v,) in reference[Id][self._dim,] for k, v in selected.items()}
@@ -456,18 +459,18 @@ class DimensionCollectionKey(_BaseKey):
         self._iter_type = iter_type
 
     @delegable
-    def min(self, selected: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
+    def min(self, selected: Selected) -> Selected:
         return {k: min(v) for k, v in selected.items()}
 
     @delegable
-    def max(self, selected: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
+    def max(self, selected: Selected) -> Selected:
         return {k: max(v) for k, v in selected.items()}
 
     @delegable
-    def range(self, selected: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
+    def range(self, selected: Selected) -> Selected:
         return {k: (min(v), max(v)) for k, v in selected.items()}
 
-    def validate(self, selected: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
         reference = kwargs["reference"]
         result: dict[tuple[int, ...], bool] = {}
@@ -485,6 +488,7 @@ class DimensionCollectionKey(_BaseKey):
 register/
 ├── key.py          # RegisterKey: remove sum/mean/min/max/range from ABC
 │                   # delegable: new decorator function
+│                   # Selected: new type alias for dict[tuple[int, ...], Any]
 │                   # _BaseKey: parameter rename selection → selected, add @delegable
 │                   # NumKey/StrKey/DimensionKey/DimensionCollectionKey: @delegable, remove **kwargs
 ├── register.py     # Selection: rewrite as __getattr__ proxy, add _dims, check _register_key_delegable
@@ -495,13 +499,13 @@ register/
 ├── parameter.py    # Unchanged
 ├── dimension.py    # Unchanged
 ├── exception.py    # Unchanged
-└── __init__.py     # Remove Method, add delegable to imports and __all__
+└── __init__.py     # Remove Method, add delegable and Selected to imports and __all__
 ```
 
 ## Exports
 
 ```python
-from .key import RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey, delegable
+from .key import RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey, delegable, Selected
 from .register import Register, KeyView, IndexSpace, Selection
 from .parameter import Id, Code, Name
 from .dimension import Dimension, Index, Metric
@@ -518,6 +522,7 @@ __all__ = [
     "DimensionKey",
     "DimensionCollectionKey",
     "delegable",
+    "Selected",
     "Dimension",
     "Index",
     "Metric",
@@ -530,7 +535,7 @@ __all__ = [
 ]
 ```
 
-`Method` is removed from all exports. `delegable` is added.
+`Method` is removed from all exports. `delegable` and `Selected` are added.
 
 ## Test Impact
 
@@ -541,7 +546,7 @@ __all__ = [
 ### Tests to update
 
 - `test_register.py`: Remove `Method` and `Selection` from imports (line 1)
-- `test_init.py`: Remove `Method` from expected exports, add `delegable`
+- `test_init.py`: Remove `Method` from expected exports, add `delegable` and `Selected`
 - `test_key.py`: Rename `selection` → `selected` in all key method test calls, remove `**kwargs` from test calls
 
 ### Tests that stay the same
