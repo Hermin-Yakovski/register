@@ -1,4 +1,4 @@
-from .key import RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey
+from .key import RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey, delegable, Selected
 from .register import Register, KeyView, IndexSpace, Selection
 from .parameter import Id, Code, Name
 from .dimension import Dimension, Index, Metric
@@ -14,6 +14,8 @@ __all__ = [
     "StrKey",
     "DimensionKey",
     "DimensionCollectionKey",
+    "delegable",
+    "Selected",
     "Dimension",
     "Index",
     "Metric",

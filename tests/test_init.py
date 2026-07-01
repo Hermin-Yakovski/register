@@ -44,10 +44,17 @@ class TestExports:
     def test_no_dimension_as_key(self):
         assert not hasattr(register, "DimensionAsKey")
 
+    def test_delegable(self):
+        assert hasattr(register, "delegable")
+
+    def test_selected(self):
+        assert hasattr(register, "Selected")
+
     def test_all_exports(self):
         expected = {
             "Register", "KeyView", "IndexSpace", "Selection",
             "RegisterKey", "NumKey", "StrKey", "DimensionKey", "DimensionCollectionKey",
+            "delegable", "Selected",
             "Dimension", "Index", "Metric",
             "Id", "Code", "Name",
             "RegisterError", "ValidationError", "DimensionError",
