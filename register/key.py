@@ -40,23 +40,8 @@ class RegisterKey(ABC):
     def name_cn(self) -> str: ...
 
     @abstractmethod
-    def sum(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
-
-    @abstractmethod
-    def mean(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
-
-    @abstractmethod
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
-
-    @abstractmethod
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
-
-    @abstractmethod
-    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
-
-    @abstractmethod
     def validate(
-        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+        self, selected: Selected, **kwargs: Any
     ) -> dict[tuple[int, ...], bool]: ...
 
 
