@@ -378,3 +378,29 @@ class TestDimensionCollectionKey:
             reference=ref,
         )
         assert result == {(1,): True, (2,): False, (3,): False}
+
+
+class TestDelegable:
+    def test_marks_function(self):
+        from register.key import delegable
+
+        def my_func(self, selected):
+            return None
+
+        decorated = delegable(my_func)
+        assert getattr(decorated, "_register_key_delegable", False) is True
+
+    def test_returns_same_function(self):
+        from register.key import delegable
+
+        def my_func(self, selected):
+            return None
+
+        decorated = delegable(my_func)
+        assert decorated is my_func
+
+    def test_unmarked_function_has_no_marker(self):
+        def my_func(self, selected):
+            return None
+
+        assert getattr(my_func, "_register_key_delegable", False) is False

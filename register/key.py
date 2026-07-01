@@ -1,10 +1,27 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol, TypeVar
 
 from .dimension import Dimension
 from .exception import RegisterError
+
+Selected = dict[tuple[int, ...], Any]
+
+
+class DelegableMethod(Protocol):
+    """Protocol for a delegable method on a RegisterKey subclass."""
+
+    def __call__(self, key: RegisterKey, selected: Selected, **Any) -> Any: ...
+
+
+F = TypeVar("F", bound=DelegableMethod)
+
+
+def delegable(fn: F) -> F:
+    """Mark a method as a delegable aggregation function."""
+    fn._register_key_delegable = True  # type: ignore[attr-defined]
+    return fn
 
 
 class RegisterKey(ABC):
