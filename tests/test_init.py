@@ -6,7 +6,7 @@ class TestExports:
         assert hasattr(register, "Register")
 
     def test_method(self):
-        assert hasattr(register, "Method")
+        assert not hasattr(register, "Method")
 
     def test_key_view(self):
         assert hasattr(register, "KeyView")
@@ -46,7 +46,7 @@ class TestExports:
 
     def test_all_exports(self):
         expected = {
-            "Register", "Method", "KeyView", "IndexSpace", "Selection",
+            "Register", "KeyView", "IndexSpace", "Selection",
             "RegisterKey", "NumKey", "StrKey", "DimensionKey", "DimensionCollectionKey",
             "Dimension", "Index", "Metric",
             "Id", "Code", "Name",

@@ -16,62 +16,36 @@ K = TypeVar("K", bound=RegisterKey)
 logger = logging.getLogger("register")
 
 
-class Method(int):
-    _NAMES: dict[int, str] = {0: "ALL", 1: "SUM", 2: "MAX", 3: "MIN", 4: "RANGE", 5: "MEAN"}
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, Method):
-            return False
-        return int(self) == int(other)
-
-    def __ne__(self, other: Any) -> bool:
-        if not isinstance(other, Method):
-            return True
-        return int(self) != int(other)
-
-    def __hash__(self) -> int:
-        return super().__hash__()
-
-    def __repr__(self) -> str:
-        return self._NAMES.get(int(self), f"Method({int(self)})")
-
-
-_METHOD_NAMES: dict[int, str] = {
-    1: "sum",
-    2: "max",
-    3: "min",
-    4: "range",
-    5: "mean",
-}
-
-
 class Selection(Generic[K]):
     _key: K
+    _dims: tuple[Dimension, ...]
     _data: dict[tuple[int, ...], Any]
 
-    def __init__(self, key: K, data: dict[tuple[int, ...], Any]) -> None:
+    def __init__(self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]) -> None:
         self._key = key
+        self._dims = dims
         self._data = data
 
-    def sum(self, **kwargs: Any) -> Any:
-        return self._key.sum(self._data, **kwargs)
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith('_'):
+            raise AttributeError(name)
+        try:
+            fn = getattr(self._key, name)
+        except AttributeError:
+            raise AttributeError(
+                f"{type(self._key).__name__} has no delegable method '{name}'"
+            )
+        if not callable(fn) or not getattr(fn, '_register_key_delegable', False):
+            raise AttributeError(
+                f"{type(self._key).__name__} has no delegable method '{name}'"
+            )
+        def wrapper(**kwargs: Any) -> Any:
+            return fn(self._data, **kwargs)
+        return wrapper
 
-    def mean(self, **kwargs: Any) -> Any:
-        return self._key.mean(self._data, **kwargs)
-
-    def min(self, **kwargs: Any) -> Any:
-        return self._key.min(self._data, **kwargs)
-
-    def max(self, **kwargs: Any) -> Any:
-        return self._key.max(self._data, **kwargs)
-
-    def range(self, **kwargs: Any) -> Any:
-        return self._key.range(self._data, **kwargs)
-
-    def agg(self, method: Method, **kwargs: Any) -> Any:
-        name = _METHOD_NAMES[int(method)]
-        fn = getattr(self._key, name)
-        return fn(self._data, **kwargs)
+    def __repr__(self) -> str:
+        dim_names = ",".join(repr(d) for d in self._dims)
+        return f"Selection({self._key}, ({dim_names}), {len(self._data)} entries)"
 
 
 class IndexSpace(Generic[K]):
@@ -87,7 +61,7 @@ class IndexSpace(Generic[K]):
     def __getitem__(self, index: tuple[Any, ...]) -> Any | Selection[K]:
         if _has_slice(index):
             filtered = _resolve(index, self._data)
-            return Selection(self._key, filtered)
+            return Selection(self._key, self._dims, filtered)
         return self._data[index]
 
     def __setitem__(self, index: tuple[int, ...], value: Any) -> None:
@@ -151,12 +125,6 @@ class KeyView(Generic[K]):
 
 
 class Register(Generic[K]):
-    SUM: Method = Method(1)
-    MAX: Method = Method(2)
-    MIN: Method = Method(3)
-    RANGE: Method = Method(4)
-    MEAN: Method = Method(5)
-
     _data: dict[K, dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]]
 
     def __init__(self) -> None:
@@ -223,7 +191,6 @@ def _matches(idx_tuple: tuple[int, ...], pattern: tuple[Any, ...]) -> bool:
 
 __all__ = [
     "Register",
-    "Method",
     "KeyView",
     "IndexSpace",
     "Selection",

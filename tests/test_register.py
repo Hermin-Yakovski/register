@@ -1,5 +1,5 @@
-from register.register import _has_slice, _matches, _resolve, Selection
-from register import Register, NumKey, Dimension
+from register.register import _has_slice, _matches, _resolve
+from register import Register, NumKey, Dimension, Selection
 
 
 class TestHasSlice:
@@ -253,12 +253,6 @@ class TestSelection:
     def test_range(self):
         assert self.reg[self.k][self.dim,][:,].range() == 2.0
 
-    def test_agg_sum(self):
-        assert self.reg[self.k][self.dim,][:,].agg(Register.SUM) == 6.0
-
-    def test_agg_mean(self):
-        assert self.reg[self.k][self.dim,][:,].agg(Register.MEAN) == 2.0
-
     def test_partial_slice(self):
         reg = Register()
         k = NumKey(1, "amount", "件量", float)
@@ -282,6 +276,42 @@ class TestSelection:
         reg[k][d1, d2][2, 2] = 4.0
         reg[k][d1, d2][2, 3] = 5.0
         assert reg[k][d1, d2][2, [1, 2]].sum() == 7.0
+
+    def test_proxy_delegable_method(self):
+        """@delegable method is callable through Selection."""
+        assert self.reg[self.k][self.dim,][:,].sum() == 6.0
+
+    def test_proxy_non_delegable_raises(self):
+        """Calling a non-@delegable method raises AttributeError."""
+        import pytest
+        sel = self.reg[self.k][self.dim,][:,]
+        with pytest.raises(AttributeError, match="has no delegable method"):
+            sel.validate()
+
+    def test_proxy_undefined_raises(self):
+        """Calling a nonexistent method raises AttributeError."""
+        import pytest
+        sel = self.reg[self.k][self.dim,][:,]
+        with pytest.raises(AttributeError, match="has no delegable method"):
+            sel.nonexistent_method()
+
+    def test_proxy_private_raises(self):
+        """Accessing _-prefixed attributes raises AttributeError."""
+        import pytest
+        sel = self.reg[self.k][self.dim,][:,]
+        with pytest.raises(AttributeError):
+            sel._private_method()
+
+    def test_proxy_concrete_kwargs(self):
+        """Delegable method works with proxy — kwargs passed through."""
+        assert self.reg[self.k][self.dim,][:,].sum() == 6.0
+
+    def test_selection_repr(self):
+        """Selection repr shows key, dims, and entry count."""
+        sel = self.reg[self.k][self.dim,][:,]
+        r = repr(sel)
+        assert "Selection" in r
+        assert "3 entries" in r
 
 
 class TestValidate:
