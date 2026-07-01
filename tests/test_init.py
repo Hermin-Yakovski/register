@@ -5,7 +5,7 @@ class TestExports:
     def test_register(self):
         assert hasattr(register, "Register")
 
-    def test_method(self):
+    def test_no_method(self):
         assert not hasattr(register, "Method")
 
     def test_key_view(self):

@@ -4,7 +4,7 @@ import logging
 from typing import Any, Generic, TypeVar, TYPE_CHECKING
 
 from .dimension import Dimension
-from .key import RegisterKey
+from .key import RegisterKey, Selected
 
 if TYPE_CHECKING:
     from collections.abc import KeysView, ValuesView
@@ -19,9 +19,9 @@ logger = logging.getLogger("register")
 class Selection(Generic[K]):
     _key: K
     _dims: tuple[Dimension, ...]
-    _data: dict[tuple[int, ...], Any]
+    _data: Selected
 
-    def __init__(self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]) -> None:
+    def __init__(self, key: K, dims: tuple[Dimension, ...], data: Selected) -> None:
         self._key = key
         self._dims = dims
         self._data = data

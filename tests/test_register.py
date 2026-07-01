@@ -304,7 +304,23 @@ class TestSelection:
 
     def test_proxy_concrete_kwargs(self):
         """Delegable method works with proxy — kwargs passed through."""
-        assert self.reg[self.k][self.dim,][:,].sum() == 6.0
+        from register.key import _BaseKey, delegable, Selected
+        from register import Dimension
+        from typing import Any
+
+        class MockKey(_BaseKey):
+            @delegable
+            def weighted_sum(self, selected: Selected, *, weight: float = 1.0) -> float:
+                return sum(selected.values()) * weight
+
+        reg = Register()
+        mk = MockKey(99, "mock", "模拟")
+        dim = Dimension("loc", "地点", "L")
+        reg[mk][dim,][1,] = 2.0
+        reg[mk][dim,][2,] = 3.0
+        sel = reg[mk][dim,][:,]
+        assert sel.weighted_sum() == 5.0
+        assert sel.weighted_sum(weight=2.0) == 10.0
 
     def test_selection_repr(self):
         """Selection repr shows key, dims, and entry count."""
