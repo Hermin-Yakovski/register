@@ -1,18 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Protocol, TypeVar
+from typing import Any, Callable, TypeVar
 
 from .dimension import Dimension
 from .exception import RegisterError
 
 Selected = dict[tuple[int, ...], Any]
-
-
-class DelegableMethod(Protocol):
-    """Protocol for a delegable method on a RegisterKey subclass."""
-
-    def __call__(self, key: RegisterKey, selected: Selected, **kwargs: Any) -> Any: ...
 
 
 F = TypeVar("F", bound=Callable[..., Any])
