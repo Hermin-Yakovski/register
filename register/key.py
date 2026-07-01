@@ -79,23 +79,28 @@ class _BaseKey(RegisterKey):
     def name_cn(self) -> str:
         return self._name_cn
 
-    def sum(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+    @delegable
+    def sum(self, selected: Selected) -> Any:
         raise NotImplementedError(f"sum not supported for {type(self).__name__}")
 
-    def mean(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+    @delegable
+    def mean(self, selected: Selected) -> Any:
         raise NotImplementedError(f"mean not supported for {type(self).__name__}")
 
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+    @delegable
+    def min(self, selected: Selected) -> Any:
         raise NotImplementedError(f"min not supported for {type(self).__name__}")
 
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+    @delegable
+    def max(self, selected: Selected) -> Any:
         raise NotImplementedError(f"max not supported for {type(self).__name__}")
 
-    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
+    @delegable
+    def range(self, selected: Selected) -> Any:
         raise NotImplementedError(f"range not supported for {type(self).__name__}")
 
     def validate(
-        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+        self, selected: Selected, **kwargs: Any
     ) -> dict[tuple[int, ...], bool]:
         raise NotImplementedError(f"validate not supported for {type(self).__name__}")
 
@@ -109,33 +114,36 @@ class NumKey(_BaseKey):
             raise RegisterError(f"vtype must be float, int, or bool, got {vtype}")
         self.vtype = vtype
 
-    def sum(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        return self.vtype(sum(selection.values()))
+    @delegable
+    def sum(self, selected: Selected) -> Any:
+        return self.vtype(sum(selected.values()))
 
-    def mean(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def mean(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("mean requires at least one value")
-        return sum(selection.values()) / len(selection)
+        return sum(selected.values()) / len(selected)
 
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def min(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("min requires at least one value")
-        return self.vtype(min(selection.values()))
+        return self.vtype(min(selected.values()))
 
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def max(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("max requires at least one value")
-        return self.vtype(max(selection.values()))
+        return self.vtype(max(selected.values()))
 
-    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def range(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("range requires at least one value")
-        return self.vtype(max(selection.values()) - min(selection.values()))
+        return self.vtype(max(selected.values()) - min(selected.values()))
 
-    def validate(
-        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]:
-        return {idx: isinstance(v, self.vtype) for idx, v in selection.items()}
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
+        return {idx: isinstance(v, self.vtype) for idx, v in selected.items()}
 
 
 class StrKey(_BaseKey):
@@ -144,20 +152,20 @@ class StrKey(_BaseKey):
     def __init__(self, id: int, name: str, name_cn: str) -> None:
         super().__init__(id, name, name_cn)
 
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def min(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("min requires at least one value")
-        return min(selection.values())
+        return min(selected.values())
 
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def max(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("max requires at least one value")
-        return max(selection.values())
+        return max(selected.values())
 
-    def validate(
-        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]:
-        return {idx: isinstance(v, str) for idx, v in selection.items()}
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
+        return {k: isinstance(v, str) for k, v in selected.items()}
 
 
 class DimensionKey(_BaseKey):
@@ -167,28 +175,29 @@ class DimensionKey(_BaseKey):
         super().__init__(id, dim.name + 'Id', dim.name_cn + 'ID')
         self._dim = dim
 
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def min(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("min requires at least one value")
-        return min(selection.values())
+        return min(selected.values())
 
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def max(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("max requires at least one value")
-        return max(selection.values())
+        return max(selected.values())
 
-    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any:
-        if not selection:
+    @delegable
+    def range(self, selected: Selected) -> Any:
+        if not selected:
             raise RegisterError("range requires at least one value")
-        return min(selection.values()), max(selection.values())
+        return min(selected.values()), max(selected.values())
 
-    def validate(
-        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
 
         reference = kwargs["reference"]
-        return {k: (v,) in reference[Id][self._dim,] for k, v in selection.items()}
+        return {k: (v,) in reference[Id][self._dim,] for k, v in selected.items()}
 
 
 class DimensionCollectionKey(_BaseKey):
@@ -201,25 +210,26 @@ class DimensionCollectionKey(_BaseKey):
         self._dim = dim
         self._iter_type = iter_type
 
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
-        return {k: min(v) for k, v in selection.items()}
+    @delegable
+    def min(self, selected: Selected) -> Selected:
+        return {k: min(v) for k, v in selected.items()}
 
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
-        return {k: max(v) for k, v in selection.items()}
+    @delegable
+    def max(self, selected: Selected) -> Selected:
+        return {k: max(v) for k, v in selected.items()}
 
-    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
-        return {k: (min(v), max(v)) for k, v in selection.items()}
+    @delegable
+    def range(self, selected: Selected) -> Selected:
+        return {k: (min(v), max(v)) for k, v in selected.items()}
 
-    def validate(
-        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
 
         reference = kwargs["reference"]
         result: dict[tuple[int, ...], bool] = {}
-        for k, v in selection.items():
+        for k, v in selected.items():
             if isinstance(v, self._iter_type):
-                result[k] = all((elem,) in reference[Id][self._dim,] for elem in v)  # type: ignore[attr-defined]
+                result[k] = all((elem,) in reference[Id][self._dim,] for elem in v)
             else:
                 result[k] = False
         return result
