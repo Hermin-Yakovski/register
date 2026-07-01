@@ -113,7 +113,7 @@ The `@delegable` decorator marks methods as aggregation functions that `Selectio
 ### Definition
 
 ```python
-from typing import Any, Callable, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 # Type alias for the selected data dict
 Selected = dict[tuple[int, ...], Any]
@@ -132,7 +132,7 @@ class DelegationWrapper(Protocol):
     """Protocol for the wrapper returned by Selection.__getattr__."""
     def __call__(self, *, **kwargs: Any) -> Any: ...
 
-F = TypeVar("F", bound=Callable[..., Any])
+F = TypeVar("F", bound=DelegableMethod)
 
 def delegable(fn: F) -> F:
     """Mark a method as a delegable aggregation function.
