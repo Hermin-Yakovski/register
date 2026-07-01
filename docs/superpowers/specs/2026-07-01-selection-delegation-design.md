@@ -121,6 +121,7 @@ class DelegableMethod(Protocol):
         self,
         key: RegisterKey,
         selected: dict[tuple[int, ...], Any],
+        *,
         **kwargs: Any,
     ) -> Any: ...
 
