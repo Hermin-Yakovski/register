@@ -113,13 +113,25 @@ The `@delegable` decorator marks methods as aggregation functions that `Selectio
 ### Definition
 
 ```python
-from typing import Any, Callable, TypeVar
+from typing import Any, Protocol, runtime_checkable, TypeVar
 
-# Type aliases for the two callables involved
-DelegableMethod = Callable[..., Any]            # the method on the key class
-DelegationWrapper = Callable[..., Any]          # the wrapper returned by Selection.__getattr__
+@runtime_checkable
+class DelegableMethod(Protocol):
+    """Protocol for a delegable method on a RegisterKey subclass."""
+    def __call__(
+        self,
+        key: RegisterKey,
+        selected: dict[tuple[int, ...], Any],
+        **kwargs: Any,
+    ) -> Any: ...
+
+@runtime_checkable
+class DelegationWrapper(Protocol):
+    """Protocol for the wrapper returned by Selection.__getattr__."""
+    def __call__(self, **kwargs: Any) -> Any: ...
 
 F = TypeVar("F", bound=DelegableMethod)
+W = TypeVar("W", bound=DelegationWrapper)
 
 def delegable(fn: F) -> F:
     """Mark a method as a delegable aggregation function.
@@ -127,7 +139,7 @@ def delegable(fn: F) -> F:
     The decorated method must accept (self, selected, *, ...) where
     selected: dict[tuple[int, ...], Any] is injected by the proxy.
 
-    Selection.__getattr__ returns a wrapper with signature:
+    Selection.__getattr__ returns a DelegationWrapper with signature:
         def wrapper(**kwargs: Any) -> Any
     that calls fn(key_instance, self._data, **kwargs).
     """
