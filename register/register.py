@@ -26,6 +26,27 @@ class Selection(Generic[K]):
         self._dims = dims
         self._data = data
 
+    def items(self) -> Iterator[tuple[tuple[int, ...], Any]]:
+        return iter(self._data.items())
+
+    def values(self) -> Iterator[Any]:
+        return iter(self._data.values())
+
+    def keys(self) -> Iterator[tuple[int, ...]]:
+        return iter(self._data.keys())
+
+    def __iter__(self) -> Iterator[tuple[int, ...]]:
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __contains__(self, key: tuple[int, ...]) -> bool:
+        return key in self._data
+
+    def get(self, key: tuple[int, ...], default: Any = None) -> Any:
+        return self._data.get(key, default)
+
     def __getattr__(self, name: str) -> Any:
         if name.startswith('_'):
             raise AttributeError(name)
@@ -40,7 +61,7 @@ class Selection(Generic[K]):
                 f"{type(self._key).__name__} has no delegable method '{name}'"
             )
         def wrapper(**kwargs: Any) -> Any:
-            return fn(self._data, **kwargs)
+            return fn(self, **kwargs)
         return wrapper
 
     def __repr__(self) -> str:
