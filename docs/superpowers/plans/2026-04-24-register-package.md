@@ -102,12 +102,12 @@ pip install register
 from register import Register, Parameter, Dimension
 
 # Define custom parameter and dimension
-price = Parameter(4, 'price', '价格', float)
-region = Dimension('region', '地区', 'REG')
+price = Parameter(4, "price", "价格", float)
+region = Dimension("region", "地区", "REG")
 
 # Use the register
 reg = Register()
-reg[price][(region,)][('Beijing',)] = 100.0
+reg[price][(region,)][("Beijing",)] = 100.0
 
 # Export to DataFrame
 frames = reg.as_frames()
@@ -139,30 +139,42 @@ git commit -m "chore: initialize project configuration with Poetry"
 # tests/test_exception.py
 import pytest
 
+
 def test_register_error_exists():
     from register.exception import RegisterError
+
     assert issubclass(RegisterError, Exception)
+
 
 def test_validation_error_exists():
     from register.exception import ValidationError
+
     assert issubclass(ValidationError, RegisterError)
+
 
 def test_dimension_error_exists():
     from register.exception import DimensionError
+
     assert issubclass(DimensionError, RegisterError)
+
 
 def test_can_raise_register_error():
     from register.exception import RegisterError
+
     with pytest.raises(RegisterError):
         raise RegisterError("test error")
 
+
 def test_can_raise_validation_error():
     from register.exception import ValidationError
+
     with pytest.raises(ValidationError):
         raise ValidationError("validation failed")
 
+
 def test_can_raise_dimension_error():
     from register.exception import DimensionError
+
     with pytest.raises(DimensionError):
         raise DimensionError("dimension error")
 ```
@@ -181,16 +193,19 @@ Expected: `ImportError` or `ModuleNotFoundError` - module doesn't exist yet
 # register/exception.py
 class RegisterError(Exception):
     """Base exception for all register errors."""
+
     pass
 
 
 class ValidationError(RegisterError):
     """Raised when type/index validation fails."""
+
     pass
 
 
 class DimensionError(RegisterError):
     """Raised for dimension-related issues."""
+
     pass
 ```
 
@@ -223,57 +238,75 @@ git commit -m "feat: add exception classes"
 # tests/test_dimension.py
 import pytest
 
+
 def test_dimension_creation():
     from register.dimension import Dimension
+
     dim = Dimension("test", "测试", "TST")
     assert dim.name == "test"
     assert dim.name_cn == "测试"
     assert dim.sign == "TST"
 
+
 def test_dimension_str_returns_sign():
     from register.dimension import Dimension
+
     dim = Dimension("test", "测试", "TST")
     assert str(dim) == "TST"
 
+
 def test_dimension_repr_returns_name():
     from register.dimension import Dimension
+
     dim = Dimension("test", "测试", "TST")
     assert repr(dim) == "test"
 
+
 def test_dimension_hashable():
     from register.dimension import Dimension
+
     dim1 = Dimension("test", "测试", "TST")
     dim2 = Dimension("test", "测试", "TST")
     assert hash(dim1) == hash(dim2)
 
+
 def test_dimension_equality():
     from register.dimension import Dimension
+
     dim1 = Dimension("test", "测试", "TST")
     dim2 = Dimension("test", "测试", "TST")
     dim3 = Dimension("other", "其他", "OTH")
     assert dim1 == dim2
     assert dim1 != dim3
 
+
 def test_dimension_equality_based_on_sign():
     from register.dimension import Dimension
+
     dim1 = Dimension("name1", "测试1", "TST")
     dim2 = Dimension("name2", "测试2", "TST")
     assert dim1 == dim2  # Equal because signs match
 
+
 def test_index_dimension_exists():
     from register.dimension import Index
+
     assert Index.name == "Index"
     assert Index.name_cn == "下标"
     assert Index.sign == "IX"
 
+
 def test_metric_dimension_exists():
     from register.dimension import Metric
+
     assert Metric.name == "Metric"
     assert Metric.name_cn == "指标汇总"
     assert Metric.sign == "MTC"
 
+
 def test_dimension_sign_property():
     from register.dimension import Dimension
+
     dim = Dimension("test", "测试", "TST")
     assert dim.sign == "TST"
 ```
@@ -325,8 +358,8 @@ class Dimension:
         return self._sign
 
 
-Index = Dimension('Index', '下标', 'IX')
-Metric = Dimension('Metric', '指标汇总', 'MTC')
+Index = Dimension("Index", "下标", "IX")
+Metric = Dimension("Metric", "指标汇总", "MTC")
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -359,72 +392,94 @@ git commit -m "feat: add Dimension class with Index and Metric"
 import pytest
 from typing import Any
 
+
 def test_parameter_creation():
     from register.parameter import Parameter
+
     param = Parameter(1, "test", "测试", int)
     assert param.id == 1
     assert param.name == "test"
     assert param.name_cn == "测试"
     assert param.vtype == int
 
+
 def test_parameter_default_vtype_is_any():
     from register.parameter import Parameter
+
     param = Parameter(1, "test", "测试")
     assert param.vtype == Any
 
+
 def test_parameter_str_returns_name():
     from register.parameter import Parameter
+
     param = Parameter(1, "test", "测试")
     assert str(param) == "test"
 
+
 def test_parameter_repr_returns_name():
     from register.parameter import Parameter
+
     param = Parameter(1, "test", "测试")
     assert repr(param) == "test"
 
+
 def test_parameter_hashable():
     from register.parameter import Parameter
+
     param1 = Parameter(1, "test", "测试")
     param2 = Parameter(1, "test", "测试")
     assert hash(param1) == hash(param2)
 
+
 def test_parameter_equality():
     from register.parameter import Parameter
+
     param1 = Parameter(1, "test", "测试")
     param2 = Parameter(1, "test", "测试")
     param3 = Parameter(2, "other", "其他")
     assert param1 == param2
     assert param1 != param3
 
+
 def test_parameter_equality_based_on_id():
     from register.parameter import Parameter
+
     param1 = Parameter(1, "name1", "测试1")
     param2 = Parameter(1, "name2", "测试2")
     assert param1 == param2  # Equal because ids match
 
+
 def test_id_parameter_exists():
     from register.parameter import Id
+
     assert Id.id == 1
     assert Id.name == "id"
     assert Id.name_cn == "ID"
     assert Id.vtype == int
 
+
 def test_code_parameter_exists():
     from register.parameter import Code
+
     assert Code.id == 2
     assert Code.name == "code"
     assert Code.name_cn == "编码"
     assert Code.vtype == str
 
+
 def test_name_parameter_exists():
     from register.parameter import Name
+
     assert Name.id == 3
     assert Name.name == "name"
     assert Name.name_cn == "名称"
     assert Name.vtype == str
 
+
 def test_parameter_implements_has_vtype_protocol():
     from register.parameter import Parameter
+
     param = Parameter(1, "test", "测试", int)
     assert hasattr(param, "vtype")
     assert param.vtype == int
@@ -483,9 +538,9 @@ class Parameter:
 
 
 # Common parameters used across all services
-Id = Parameter(1, 'id', 'ID', int)
-Code = Parameter(2, 'code', '编码')
-Name = Parameter(3, 'name', '名称', str)
+Id = Parameter(1, "id", "ID", int)
+Code = Parameter(2, "code", "编码")
+Name = Parameter(3, "name", "名称", str)
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -517,50 +572,68 @@ git commit -m "feat: add Parameter class with Id, Code, Name"
 # tests/test_register_helpers.py
 import pytest
 
+
 def test_method_class_exists():
     from register.register import Method
+
     m = Method(1)
     assert int(m) == 1
 
+
 def test_method_equality():
     from register.register import Method
+
     m1 = Method(1)
     m2 = Method(1)
     m3 = Method(2)
     assert m1 == m2
     assert m1 != m3
 
+
 def test_method_not_equal_to_int():
     from register.register import Method
+
     m = Method(1)
     assert m != 1
     assert m != "1"
 
+
 def test_method_hashable():
     from register.register import Method
+
     m1 = Method(1)
     m2 = Method(1)
     assert hash(m1) == hash(m2)
     {m1: "value"}  # Should not raise
 
+
 def test_register_all_method():
     from register.register import Register
+
     assert int(Register.ALL) == 0
+
 
 def test_register_sum_method():
     from register.register import Register
+
     assert int(Register.SUM) == 1
+
 
 def test_register_max_method():
     from register.register import Register
+
     assert int(Register.MAX) == 2
+
 
 def test_register_min_method():
     from register.register import Register
+
     assert int(Register.MIN) == 3
+
 
 def test_register_range_method():
     from register.register import Register
+
     assert int(Register.RANGE) == 4
 ```
 
@@ -626,27 +699,35 @@ Expected: All 10 tests PASS
 ```python
 # Add to tests/test_register_helpers.py
 
+
 def test_dimension_as_key_init():
     from register.register import DimensionAsKey
+
     dak = DimensionAsKey()
     assert dak is not None
 
+
 def test_dimension_as_key_getitem_returns_dict():
     from register.register import DimensionAsKey
+
     dak = DimensionAsKey()
     key = ("dim1", "dim2")
     result = dak[key]
     assert isinstance(result, dict)
 
+
 def test_dimension_as_key_iterable():
     from register.register import DimensionAsKey
+
     dak = DimensionAsKey()
     key = ("dim1", "dim2")
     _ = dak[key]
     assert key in iter(dak)
 
+
 def test_dimension_as_key_pop_removes_key():
     from register.register import DimensionAsKey
+
     dak = DimensionAsKey()
     key = ("dim1", "dim2")
     _ = dak[key]
@@ -654,8 +735,10 @@ def test_dimension_as_key_pop_removes_key():
     assert result == {}
     assert key not in iter(dak)
 
+
 def test_dimension_as_key_pop_nonexistent_returns_empty():
     from register.register import DimensionAsKey
+
     dak = DimensionAsKey()
     result = dak.pop(("nonexistent",))
     assert result == {}
@@ -690,42 +773,54 @@ git commit -m "feat: add Method and DimensionAsKey helper classes"
 # tests/test_register.py
 import pytest
 
+
 def test_register_init():
     from register.register import Register
+
     reg = Register()
     assert reg.version_id == 0
 
+
 def test_register_init_with_version():
     from register.register import Register
+
     reg = Register(version_id=5)
     assert reg.version_id == 5
+
 
 def test_register_getitem_returns_dimension_as_key():
     from register.register import Register, DimensionAsKey
     from register.parameter import Id
+
     reg = Register()
     result = reg[Id]
     assert isinstance(result, DimensionAsKey)
 
+
 def test_register_iteration_yields_parameters():
     from register.register import Register
     from register.parameter import Id
+
     reg = Register()
     _ = reg[Id]
     assert Id in iter(reg)
 
+
 def test_register_contains():
     from register.register import Register
     from register.parameter import Id, Code
+
     reg = Register()
     _ = reg[Id]
     assert Id in reg
     assert Code not in reg
 
+
 def test_register_store_and_retrieve_value():
     from register.register import Register
     from register.parameter import Id
     from register.dimension import Dimension
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = 42
@@ -751,7 +846,8 @@ from .dimension import Dimension
 
 # ... existing Method, DimensionAsKey classes ...
 
-K = TypeVar('K', bound=Parameter)
+K = TypeVar("K", bound=Parameter)
+
 
 class Register(Generic[K]):
     ALL: Method = Method(0)
@@ -810,9 +906,11 @@ git commit -m "feat: add Register class basic functionality"
 
 from register.dimension import Dimension
 
+
 def test_select_returns_all_indices_when_target_none():
     from register.register import Register
     from register.parameter import Id
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = "a"
@@ -821,9 +919,11 @@ def test_select_returns_all_indices_when_target_none():
     result = list(reg.select(Id, (dim,)))
     assert result == [(1,), (2,), (3,)]
 
+
 def test_select_filters_by_exact_match():
     from register.register import Register
     from register.parameter import Id
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = "a"
@@ -831,9 +931,11 @@ def test_select_filters_by_exact_match():
     result = list(reg.select(Id, (dim,), (1,)))
     assert result == [(1,)]
 
+
 def test_select_filters_with_all_method():
     from register.register import Register
     from register.parameter import Id
+
     reg = Register()
     dim1 = Dimension("test1", "测试1", "T1")
     dim2 = Dimension("test2", "测试2", "T2")
@@ -843,9 +945,11 @@ def test_select_filters_with_all_method():
     result = list(reg.select(Id, (dim1, dim2), (Register.ALL, 10)))
     assert result == [(1, 10), (2, 10)]
 
+
 def test_select_with_multiple_dimensions():
     from register.register import Register
     from register.parameter import Id
+
     reg = Register()
     dim1 = Dimension("test1", "测试1", "T1")
     dim2 = Dimension("test2", "测试2", "T2")
@@ -873,6 +977,7 @@ from typing import Generator
 from .dimension import Dimension
 
 # ... inside Register class ...
+
 
 def select(
     self,
@@ -917,16 +1022,20 @@ git commit -m "feat: add Register.select() method"
 
 import pandas as pd
 
+
 def test_as_frames_empty_register():
     from register.register import Register
+
     reg = Register()
     frames = reg.as_frames()
     assert frames == {}
+
 
 def test_as_frames_single_value():
     from register.register import Register
     from register.parameter import Id
     from register.dimension import Dimension
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = 42
@@ -935,10 +1044,12 @@ def test_as_frames_single_value():
     df = frames[(dim,)]
     assert df.iloc[0]["test"] == 42
 
+
 def test_as_frames_multiple_parameters():
     from register.register import Register
     from register.parameter import Id, Name
     from register.dimension import Dimension
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = 42
@@ -948,10 +1059,12 @@ def test_as_frames_multiple_parameters():
     assert df.iloc[0]["id"] == 42
     assert df.iloc[0]["name"] == "test_name"
 
+
 def test_as_frames_display_cn():
     from register.register import Register
     from register.parameter import Id
     from register.dimension import Dimension
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = 42
@@ -960,10 +1073,12 @@ def test_as_frames_display_cn():
     assert "测试" in df.columns
     assert df.iloc[0]["ID"] == 42
 
+
 def test_as_frames_multiple_dimensions():
     from register.register import Register
     from register.parameter import Id
     from register.dimension import Dimension
+
     reg = Register()
     dim1 = Dimension("test1", "测试1", "T1")
     dim2 = Dimension("test2", "测试2", "T2")
@@ -992,6 +1107,7 @@ import pandas as pd
 from typing import dict as typing_dict
 
 # ... inside Register class ...
+
 
 def as_frames(self, display_cn: bool = False) -> typing_dict[tuple[Dimension, ...], pd.DataFrame]:
     frames: typing_dict[tuple[Dimension, ...], pd.DataFrame] = {}
@@ -1057,61 +1173,73 @@ import logging
 import pytest
 from register.exception import ValidationError, DimensionError
 
+
 def test_validate_with_valid_data_no_errors():
     from register.register import Register
     from register.parameter import Id
     from register.dimension import Dimension
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = 42
     # Should not raise
     reg.validate()
 
+
 def test_validate_with_invalid_type_logs_warning():
     from register.register import Register
     from register.parameter import Id
     from register.dimension import Dimension
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = "not_an_int"  # Wrong type
     # Should log warning but not raise
     reg.validate(raise_errors=False)
 
+
 def test_validate_with_invalid_type_raises_error():
     from register.register import Register
     from register.parameter import Id
     from register.dimension import Dimension
+
     reg = Register()
     dim = Dimension("test", "测试", "TST")
     reg[Id][(dim,)][(1,)] = "not_an_int"
     with pytest.raises(ValidationError):
         reg.validate(raise_errors=True)
 
+
 def test_validate_with_any_type_accepts_anything():
     from register.register import Register
     from register.parameter import Parameter
     from register.dimension import Dimension
     from typing import Any
+
     reg = Register()
     param = Parameter(100, "any_param", "任意参数", Any)
     dim = Dimension("test", "测试", "TST")
     reg[param][(dim,)][(1,)] = "anything"
     reg.validate(raise_errors=True)  # Should not raise
 
+
 def test_validate_with_list_type():
     from register.register import Register
     from register.parameter import Parameter
     from register.dimension import Dimension
+
     reg = Register()
     param = Parameter(100, "list_param", "列表参数", list[int])
     dim = Dimension("test", "测试", "TST")
     reg[param][(dim,)][(1,)] = [1, 2, 3]
     reg.validate(raise_errors=True)  # Should not raise
 
+
 def test_validate_with_invalid_list_element_type():
     from register.register import Register
     from register.parameter import Parameter
     from register.dimension import Dimension
+
     reg = Register()
     param = Parameter(100, "list_param", "列表参数", list[int])
     dim = Dimension("test", "测试", "TST")
@@ -1119,10 +1247,12 @@ def test_validate_with_invalid_list_element_type():
     with pytest.raises(ValidationError):
         reg.validate(raise_errors=True)
 
+
 def test_validate_with_dimension_type():
     from register.register import Register
     from register.parameter import Parameter
     from register.dimension import Dimension
+
     reg = Register()
     param = Parameter(100, "dim_param", "维度参数", Dimension)
     dim = Dimension("test", "测试", "TST")
@@ -1132,10 +1262,12 @@ def test_validate_with_dimension_type():
     reg[param][(dim,)][(1,)] = dim2
     reg.validate(raise_errors=True)  # Should not raise
 
+
 def test_validate_with_invalid_dimension_value():
     from register.register import Register
     from register.parameter import Parameter
     from register.dimension import Dimension
+
     reg = Register()
     param = Parameter(100, "dim_param", "维度参数", Dimension)
     dim = Dimension("test", "测试", "TST")
@@ -1163,9 +1295,10 @@ import logging
 from typing import get_args, get_origin
 from .exception import ValidationError, DimensionError
 
-logger = logging.getLogger('register')
+logger = logging.getLogger("register")
 
 # ... inside Register class ...
+
 
 def validate(self, dim: DimensionAsKey, raise_errors: bool = False):
     for key in self._data:
@@ -1269,40 +1402,56 @@ git commit -m "feat: add Register.validate() method with error raising"
 ```python
 # tests/test_init.py
 
+
 def test_import_register():
     from register import Register
+
     assert Register is not None
+
 
 def test_import_parameter():
     from register import Parameter
+
     assert Parameter is not None
+
 
 def test_import_dimension():
     from register import Dimension
+
     assert Dimension is not None
+
 
 def test_import_index():
     from register import Index
+
     assert Index is not None
+
 
 def test_import_metric():
     from register import Metric
+
     assert Metric is not None
+
 
 def test_import_common_parameters():
     from register import Id, Code, Name
+
     assert Id is not None
     assert Code is not None
     assert Name is not None
 
+
 def test_import_exceptions():
     from register import RegisterError, ValidationError, DimensionError
+
     assert RegisterError is not None
     assert ValidationError is not None
     assert DimensionError is not None
 
+
 def test_import_from_exception_module():
     from register.exception import RegisterError, ValidationError, DimensionError
+
     assert RegisterError is not None
     assert ValidationError is not None
     assert DimensionError is not None
@@ -1371,10 +1520,12 @@ from register import Register, Parameter, Dimension
 from register.dimension import Index, Metric
 from register.parameter import Id, Code, Name
 
+
 @pytest.fixture
 def empty_register():
     """Empty Register instance."""
     return Register()
+
 
 @pytest.fixture
 def sample_register():
@@ -1390,20 +1541,24 @@ def sample_register():
 
     return reg
 
+
 @pytest.fixture
 def sample_dimension():
     """Sample Dimension for testing."""
     return Dimension("test", "测试", "TST")
+
 
 @pytest.fixture
 def sample_parameter():
     """Sample Parameter for testing."""
     return Parameter(100, "test_param", "测试参数", int)
 
+
 @pytest.fixture
 def price_parameter():
     """Price Parameter with float type."""
-    return Parameter(4, 'price', '价格', float)
+    return Parameter(4, "price", "价格", float)
+
 
 @pytest.fixture
 def region_dimension():
@@ -1596,16 +1751,16 @@ pip install register
 from register import Register, Parameter, Dimension
 
 # Define custom parameter and dimension
-price = Parameter(4, 'price', '价格', float)
-region = Dimension('region', '地区', 'REG')
+price = Parameter(4, "price", "价格", float)
+region = Dimension("region", "地区", "REG")
 
 # Create and populate register
 reg = Register()
-reg[price][(region,)][('Beijing',)] = 100.0
-reg[price][(region,)][('Shanghai',)] = 150.0
+reg[price][(region,)][("Beijing",)] = 100.0
+reg[price][(region,)][("Shanghai",)] = 150.0
 
 # Select data
-for index in reg.select(price, (region,), ('Beijing',)):
+for index in reg.select(price, (region,), ("Beijing",)):
     print(f"Price in Beijing: {reg[price][(region,)][index]}")
 
 # Export to DataFrame

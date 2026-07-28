@@ -175,6 +175,7 @@ Scalar values. Aggregation operates on individual values.
 ```python
 class ParameterKey(_BaseKey):
     """Key for scalar values."""
+
     # Inherits id, name, name_cn, vtype, __hash__, __eq__, __str__, __repr__ from _BaseKey
     # Implements sum, mean, min, max, range, validate
 ```
@@ -235,9 +236,7 @@ Tuples of fixed arity. Aggregation is **element-wise** across tuples using `zip(
 class PositionKey(_BaseKey):
     """Key for positional values — tuples of the same length."""
 
-    def __init__(
-        self, id: int, name: str, name_cn: str, vtype: Any = None, arity: int = 0
-    ) -> None:
+    def __init__(self, id: int, name: str, name_cn: str, vtype: Any = None, arity: int = 0) -> None:
         super().__init__(id, name, name_cn, vtype)
         if arity < 1:
             raise RegisterError("arity must be >= 1")
@@ -276,6 +275,7 @@ Variable-length iterables of vtype. Aggregation is **per-iterable reduction** �
 ```python
 class IterableKey(_BaseKey):
     """Key for iterable values — variable-length collections of vtype."""
+
     # Inherits id, name, name_cn, vtype from _BaseKey
     # Implements sum, mean, min, max, range, validate
 ```
@@ -296,10 +296,10 @@ Each method reduces each input iterable independently, returning a list of per-i
 
 ```python
 itr = IterableKey(1, "scores", "分数", vtype=int)
-itr.sum(data, [1, 2, 3], [4, 5])    # => [6, 9]
-itr.mean(data, [1, 2, 3], [4, 5])   # => [2.0, 4.5]
-itr.min(data, [1, 2, 3], [4, 5])    # => [1, 4]
-itr.max(data, [1, 2, 3], [4, 5])    # => [3, 5]
+itr.sum(data, [1, 2, 3], [4, 5])  # => [6, 9]
+itr.mean(data, [1, 2, 3], [4, 5])  # => [2.0, 4.5]
+itr.min(data, [1, 2, 3], [4, 5])  # => [1, 4]
+itr.max(data, [1, 2, 3], [4, 5])  # => [3, 5]
 itr.range(data, [1, 2, 3], [4, 5])  # => [2, 1]
 ```
 
@@ -316,9 +316,7 @@ def validate(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> bool:
 
 ```python
 class Method(int):
-    _NAMES: dict[int, str] = {
-        0: "ALL", 1: "SUM", 2: "MAX", 3: "MIN", 4: "RANGE", 5: "MEAN"
-    }
+    _NAMES: dict[int, str] = {0: "ALL", 1: "SUM", 2: "MAX", 3: "MIN", 4: "RANGE", 5: "MEAN"}
 ```
 
 ## Register Class
@@ -327,6 +325,7 @@ class Method(int):
 from .key import RegisterKey
 
 K = TypeVar("K", bound=RegisterKey)
+
 
 class Register(Generic[K]):
     ALL: Method = Method(0)

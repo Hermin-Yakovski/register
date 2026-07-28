@@ -24,22 +24,27 @@ Add a new test class at the end of `tests/test_key.py`:
 class TestDelegable:
     def test_marks_function(self):
         from register.key import delegable
+
         def my_func(self, selected):
             return None
+
         decorated = delegable(my_func)
-        assert getattr(decorated, '_register_key_delegable', False) is True
+        assert getattr(decorated, "_register_key_delegable", False) is True
 
     def test_returns_same_function(self):
         from register.key import delegable
+
         def my_func(self, selected):
             return None
+
         decorated = delegable(my_func)
         assert decorated is my_func
 
     def test_unmarked_function_has_no_marker(self):
         def my_func(self, selected):
             return None
-        assert getattr(my_func, '_register_key_delegable', False) is False
+
+        assert getattr(my_func, "_register_key_delegable", False) is False
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -134,9 +139,7 @@ class RegisterKey(ABC):
     def name_cn(self) -> str: ...
 
     @abstractmethod
-    def validate(
-        self, selected: Selected, **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]: ...
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]: ...
 ```
 
 This removes `sum`, `mean`, `min`, `max`, `range` from the ABC. Only `id`, `name`, `name_cn`, and `validate` remain as abstract.
@@ -166,25 +169,29 @@ git commit -m "refactor: remove aggregation methods from RegisterKey ABC"
 Add to `TestBaseKey` in `tests/test_key.py`:
 
 ```python
-    def test_sum_is_delegable(self):
-        k = ConcreteKey(1, "a", "A")
-        assert getattr(k.sum, '_register_key_delegable', False) is True
+def test_sum_is_delegable(self):
+    k = ConcreteKey(1, "a", "A")
+    assert getattr(k.sum, "_register_key_delegable", False) is True
 
-    def test_mean_is_delegable(self):
-        k = ConcreteKey(1, "a", "A")
-        assert getattr(k.mean, '_register_key_delegable', False) is True
 
-    def test_min_is_delegable(self):
-        k = ConcreteKey(1, "a", "A")
-        assert getattr(k.min, '_register_key_delegable', False) is True
+def test_mean_is_delegable(self):
+    k = ConcreteKey(1, "a", "A")
+    assert getattr(k.mean, "_register_key_delegable", False) is True
 
-    def test_max_is_delegable(self):
-        k = ConcreteKey(1, "a", "A")
-        assert getattr(k.max, '_register_key_delegable', False) is True
 
-    def test_range_is_delegable(self):
-        k = ConcreteKey(1, "a", "A")
-        assert getattr(k.range, '_register_key_delegable', False) is True
+def test_min_is_delegable(self):
+    k = ConcreteKey(1, "a", "A")
+    assert getattr(k.min, "_register_key_delegable", False) is True
+
+
+def test_max_is_delegable(self):
+    k = ConcreteKey(1, "a", "A")
+    assert getattr(k.max, "_register_key_delegable", False) is True
+
+
+def test_range_is_delegable(self):
+    k = ConcreteKey(1, "a", "A")
+    assert getattr(k.range, "_register_key_delegable", False) is True
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -215,9 +222,11 @@ class _BaseKey(RegisterKey):
         return hash((type(self).__name__, self._id, self._name))
 
     def __eq__(self, other: object) -> bool:
-        return (isinstance(other, self.__class__)
-                and self._id == getattr(other, "_id", None)
-                and self._name == getattr(other, "_name", None))
+        return (
+            isinstance(other, self.__class__)
+            and self._id == getattr(other, "_id", None)
+            and self._name == getattr(other, "_name", None)
+        )
 
     @property
     def id(self) -> int:
@@ -251,9 +260,7 @@ class _BaseKey(RegisterKey):
     def range(self, selected: Selected) -> Any:
         raise NotImplementedError(f"range not supported for {type(self).__name__}")
 
-    def validate(
-        self, selected: Selected, **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         raise NotImplementedError(f"validate not supported for {type(self).__name__}")
 ```
 
@@ -289,25 +296,29 @@ git commit -m "refactor: add @delegable to _BaseKey, rename selection → select
 Add to `TestNumKey` in `tests/test_key.py`:
 
 ```python
-    def test_sum_is_delegable(self):
-        k = NumKey(1, "a", "A", float)
-        assert getattr(k.sum, '_register_key_delegable', False) is True
+def test_sum_is_delegable(self):
+    k = NumKey(1, "a", "A", float)
+    assert getattr(k.sum, "_register_key_delegable", False) is True
 
-    def test_mean_is_delegable(self):
-        k = NumKey(1, "a", "A", float)
-        assert getattr(k.mean, '_register_key_delegable', False) is True
 
-    def test_min_is_delegable(self):
-        k = NumKey(1, "a", "A", float)
-        assert getattr(k.min, '_register_key_delegable', False) is True
+def test_mean_is_delegable(self):
+    k = NumKey(1, "a", "A", float)
+    assert getattr(k.mean, "_register_key_delegable", False) is True
 
-    def test_max_is_delegable(self):
-        k = NumKey(1, "a", "A", float)
-        assert getattr(k.max, '_register_key_delegable', False) is True
 
-    def test_range_is_delegable(self):
-        k = NumKey(1, "a", "A", float)
-        assert getattr(k.range, '_register_key_delegable', False) is True
+def test_min_is_delegable(self):
+    k = NumKey(1, "a", "A", float)
+    assert getattr(k.min, "_register_key_delegable", False) is True
+
+
+def test_max_is_delegable(self):
+    k = NumKey(1, "a", "A", float)
+    assert getattr(k.max, "_register_key_delegable", False) is True
+
+
+def test_range_is_delegable(self):
+    k = NumKey(1, "a", "A", float)
+    assert getattr(k.range, "_register_key_delegable", False) is True
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -386,13 +397,14 @@ git commit -m "refactor: add @delegable to NumKey, remove **kwargs, use Selected
 Add to `TestStrKey` in `tests/test_key.py`:
 
 ```python
-    def test_min_is_delegable(self):
-        k = StrKey(1, "a", "A")
-        assert getattr(k.min, '_register_key_delegable', False) is True
+def test_min_is_delegable(self):
+    k = StrKey(1, "a", "A")
+    assert getattr(k.min, "_register_key_delegable", False) is True
 
-    def test_max_is_delegable(self):
-        k = StrKey(1, "a", "A")
-        assert getattr(k.max, '_register_key_delegable', False) is True
+
+def test_max_is_delegable(self):
+    k = StrKey(1, "a", "A")
+    assert getattr(k.max, "_register_key_delegable", False) is True
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -452,20 +464,22 @@ git commit -m "refactor: add @delegable to StrKey, remove **kwargs, use Selected
 Add to `TestDimensionKey` in `tests/test_key.py`:
 
 ```python
-    def test_min_is_delegable(self):
-        dim = Dimension("location", "地点", "L")
-        k = DimensionKey(1, dim)
-        assert getattr(k.min, '_register_key_delegable', False) is True
+def test_min_is_delegable(self):
+    dim = Dimension("location", "地点", "L")
+    k = DimensionKey(1, dim)
+    assert getattr(k.min, "_register_key_delegable", False) is True
 
-    def test_max_is_delegable(self):
-        dim = Dimension("location", "地点", "L")
-        k = DimensionKey(1, dim)
-        assert getattr(k.max, '_register_key_delegable', False) is True
 
-    def test_range_is_delegable(self):
-        dim = Dimension("location", "地点", "L")
-        k = DimensionKey(1, dim)
-        assert getattr(k.range, '_register_key_delegable', False) is True
+def test_max_is_delegable(self):
+    dim = Dimension("location", "地点", "L")
+    k = DimensionKey(1, dim)
+    assert getattr(k.max, "_register_key_delegable", False) is True
+
+
+def test_range_is_delegable(self):
+    dim = Dimension("location", "地点", "L")
+    k = DimensionKey(1, dim)
+    assert getattr(k.range, "_register_key_delegable", False) is True
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -482,7 +496,7 @@ class DimensionKey(_BaseKey):
     """Key for dimension values (always int)."""
 
     def __init__(self, id: int, dim: Dimension) -> None:
-        super().__init__(id, dim.name + 'Id', dim.name_cn + 'ID')
+        super().__init__(id, dim.name + "Id", dim.name_cn + "ID")
         self._dim = dim
 
     @delegable
@@ -535,20 +549,22 @@ git commit -m "refactor: add @delegable to DimensionKey, remove **kwargs, use Se
 Add to `TestDimensionCollectionKey` in `tests/test_key.py`:
 
 ```python
-    def test_min_is_delegable(self):
-        dim = Dimension("location", "地点", "L")
-        k = DimensionCollectionKey(1, dim)
-        assert getattr(k.min, '_register_key_delegable', False) is True
+def test_min_is_delegable(self):
+    dim = Dimension("location", "地点", "L")
+    k = DimensionCollectionKey(1, dim)
+    assert getattr(k.min, "_register_key_delegable", False) is True
 
-    def test_max_is_delegable(self):
-        dim = Dimension("location", "地点", "L")
-        k = DimensionCollectionKey(1, dim)
-        assert getattr(k.max, '_register_key_delegable', False) is True
 
-    def test_range_is_delegable(self):
-        dim = Dimension("location", "地点", "L")
-        k = DimensionCollectionKey(1, dim)
-        assert getattr(k.range, '_register_key_delegable', False) is True
+def test_max_is_delegable(self):
+    dim = Dimension("location", "地点", "L")
+    k = DimensionCollectionKey(1, dim)
+    assert getattr(k.max, "_register_key_delegable", False) is True
+
+
+def test_range_is_delegable(self):
+    dim = Dimension("location", "地点", "L")
+    k = DimensionCollectionKey(1, dim)
+    assert getattr(k.range, "_register_key_delegable", False) is True
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -565,7 +581,7 @@ class DimensionCollectionKey(_BaseKey):
     """Key for collections of dimension values."""
 
     def __init__(self, id: int, dim: Dimension, iter_type: type = list) -> None:
-        super().__init__(id, dim.name + 'Collection', dim.name_cn + '集合')
+        super().__init__(id, dim.name + "Collection", dim.name_cn + "集合")
         if iter_type not in (set, list, tuple):
             raise RegisterError(f"iter_type must be set, list, or tuple, got {iter_type}")
         self._dim = dim
@@ -622,48 +638,57 @@ git commit -m "refactor: add @delegable to DimensionCollectionKey, remove **kwar
 Add new test methods to `TestSelection` in `tests/test_register.py`:
 
 ```python
-    def test_proxy_delegable_method(self):
-        """@delegable method is callable through Selection."""
-        assert self.reg[self.k][self.dim,][:,].sum() == 6.0
+def test_proxy_delegable_method(self):
+    """@delegable method is callable through Selection."""
+    assert self.reg[self.k][self.dim,][:,].sum() == 6.0
 
-    def test_proxy_non_delegable_raises(self):
-        """Calling a non-@delegable method raises AttributeError."""
-        from register import Register, NumKey, Dimension
-        reg = Register()
-        k = NumKey(1, "amount", "件量", float)
-        dim = Dimension("loc", "地点", "L")
-        reg[k][dim,][1,] = 1.0
-        sel = reg[k][dim,][:,]
-        import pytest
-        with pytest.raises(AttributeError, match="has no delegable method"):
-            sel.validate()
 
-    def test_proxy_undefined_raises(self):
-        """Calling a nonexistent method raises AttributeError."""
-        import pytest
-        sel = self.reg[self.k][self.dim,][:,]
-        with pytest.raises(AttributeError, match="has no delegable method"):
-            sel.nonexistent_method()
+def test_proxy_non_delegable_raises(self):
+    """Calling a non-@delegable method raises AttributeError."""
+    from register import Register, NumKey, Dimension
 
-    def test_proxy_private_raises(self):
-        """Accessing _-prefixed attributes raises AttributeError."""
-        import pytest
-        sel = self.reg[self.k][self.dim,][:,]
-        with pytest.raises(AttributeError):
-            sel._private_method()
+    reg = Register()
+    k = NumKey(1, "amount", "件量", float)
+    dim = Dimension("loc", "地点", "L")
+    reg[k][dim,][1,] = 1.0
+    sel = reg[k][dim,][:,]
+    import pytest
 
-    def test_proxy_concrete_kwargs(self):
-        """Delegable method works with concrete keyword arguments via proxy."""
-        # NumKey methods don't have extra kwargs, but the proxy passes them through.
-        # Verify the proxy works with empty kwargs (baseline).
-        assert self.reg[self.k][self.dim,][:,].sum() == 6.0
+    with pytest.raises(AttributeError, match="has no delegable method"):
+        sel.validate()
 
-    def test_selection_repr(self):
-        """Selection repr shows key, dims, and entry count."""
-        sel = self.reg[self.k][self.dim,][:,]
-        r = repr(sel)
-        assert "Selection" in r
-        assert "3 entries" in r
+
+def test_proxy_undefined_raises(self):
+    """Calling a nonexistent method raises AttributeError."""
+    import pytest
+
+    sel = self.reg[self.k][self.dim,][:,]
+    with pytest.raises(AttributeError, match="has no delegable method"):
+        sel.nonexistent_method()
+
+
+def test_proxy_private_raises(self):
+    """Accessing _-prefixed attributes raises AttributeError."""
+    import pytest
+
+    sel = self.reg[self.k][self.dim,][:,]
+    with pytest.raises(AttributeError):
+        sel._private_method()
+
+
+def test_proxy_concrete_kwargs(self):
+    """Delegable method works with concrete keyword arguments via proxy."""
+    # NumKey methods don't have extra kwargs, but the proxy passes them through.
+    # Verify the proxy works with empty kwargs (baseline).
+    assert self.reg[self.k][self.dim,][:,].sum() == 6.0
+
+
+def test_selection_repr(self):
+    """Selection repr shows key, dims, and entry count."""
+    sel = self.reg[self.k][self.dim,][:,]
+    r = repr(sel)
+    assert "Selection" in r
+    assert "3 entries" in r
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -681,8 +706,13 @@ class Method(int):
     _NAMES: dict[int, str] = {0: "ALL", 1: "SUM", 2: "MAX", 3: "MIN", 4: "RANGE", 5: "MEAN"}
     # ... entire class ...
 
+
 _METHOD_NAMES: dict[int, str] = {
-    1: "sum", 2: "max", 3: "min", 4: "range", 5: "mean",
+    1: "sum",
+    2: "max",
+    3: "min",
+    4: "range",
+    5: "mean",
 }
 ```
 
@@ -696,21 +726,23 @@ class Selection(Generic[K]):
     _dims: tuple[Dimension, ...]
     _data: dict[tuple[int, ...], Any]
 
-    def __init__(self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]) -> None:
+    def __init__(
+        self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]
+    ) -> None:
         self._key = key
         self._dims = dims
         self._data = data
 
     def __getattr__(self, name: str) -> Any:
-        if name.startswith('_'):
+        if name.startswith("_"):
             raise AttributeError(name)
         fn = getattr(self._key, name)
-        if not callable(fn) or not getattr(fn, '_register_key_delegable', False):
-            raise AttributeError(
-                f"{type(self._key).__name__} has no delegable method '{name}'"
-            )
+        if not callable(fn) or not getattr(fn, "_register_key_delegable", False):
+            raise AttributeError(f"{type(self._key).__name__} has no delegable method '{name}'")
+
         def wrapper(**kwargs: Any) -> Any:
             return fn(self._data, **kwargs)
+
         return wrapper
 
     def __repr__(self) -> str:
@@ -788,26 +820,41 @@ In `tests/test_init.py`, make these changes:
 Remove `test_method` and replace with `test_delegable` and `test_selected`:
 
 ```python
-    def test_delegable(self):
-        assert hasattr(register, "delegable")
+def test_delegable(self):
+    assert hasattr(register, "delegable")
 
-    def test_selected(self):
-        assert hasattr(register, "Selected")
+
+def test_selected(self):
+    assert hasattr(register, "Selected")
 ```
 
 Update `test_all_exports` — replace `"Method"` with `"delegable"` and `"Selected"`:
 
 ```python
-    def test_all_exports(self):
-        expected = {
-            "Register", "KeyView", "IndexSpace", "Selection",
-            "RegisterKey", "NumKey", "StrKey", "DimensionKey", "DimensionCollectionKey",
-            "delegable", "Selected",
-            "Dimension", "Index", "Metric",
-            "Id", "Code", "Name",
-            "RegisterError", "ValidationError", "DimensionError",
-        }
-        assert expected == set(register.__all__)
+def test_all_exports(self):
+    expected = {
+        "Register",
+        "KeyView",
+        "IndexSpace",
+        "Selection",
+        "RegisterKey",
+        "NumKey",
+        "StrKey",
+        "DimensionKey",
+        "DimensionCollectionKey",
+        "delegable",
+        "Selected",
+        "Dimension",
+        "Index",
+        "Metric",
+        "Id",
+        "Code",
+        "Name",
+        "RegisterError",
+        "ValidationError",
+        "DimensionError",
+    }
+    assert expected == set(register.__all__)
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -820,7 +867,15 @@ Expected: FAIL — `delegable` and `Selected` not yet exported, `Method` still e
 Replace the contents of `register/__init__.py` with:
 
 ```python
-from .key import RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey, delegable, Selected
+from .key import (
+    RegisterKey,
+    NumKey,
+    StrKey,
+    DimensionKey,
+    DimensionCollectionKey,
+    delegable,
+    Selected,
+)
 from .register import Register, KeyView, IndexSpace, Selection
 from .parameter import Id, Code, Name
 from .dimension import Dimension, Index, Metric

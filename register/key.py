@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from .dimension import Dimension
 from .exception import RegisterError
@@ -34,9 +35,7 @@ class RegisterKey(ABC):
     def name_cn(self) -> str: ...
 
     @abstractmethod
-    def validate(
-        self, selected: Selected, **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]: ...
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]: ...
 
 
 class _BaseKey(RegisterKey):
@@ -57,9 +56,11 @@ class _BaseKey(RegisterKey):
         return hash((type(self).__name__, self._id, self._name))
 
     def __eq__(self, other: object) -> bool:
-        return (isinstance(other, self.__class__)
-                and self._id == getattr(other, "_id", None)
-                and self._name == getattr(other, "_name", None))
+        return (
+            isinstance(other, self.__class__)
+            and self._id == getattr(other, "_id", None)
+            and self._name == getattr(other, "_name", None)
+        )
 
     @property
     def id(self) -> int:
@@ -93,9 +94,7 @@ class _BaseKey(RegisterKey):
     def range(self, selected: Selected) -> Any:
         raise NotImplementedError(f"range not supported for {type(self).__name__}")
 
-    def validate(
-        self, selected: Selected, **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         raise NotImplementedError(f"validate not supported for {type(self).__name__}")
 
 
@@ -166,7 +165,7 @@ class DimensionKey(_BaseKey):
     """Key for dimension values (always int)."""
 
     def __init__(self, id: int, dim: Dimension) -> None:
-        super().__init__(id, dim.name + 'Id', dim.name_cn + 'ID')
+        super().__init__(id, dim.name + "Id", dim.name_cn + "ID")
         self._dim = dim
 
     @delegable
@@ -198,7 +197,7 @@ class DimensionCollectionKey(_BaseKey):
     """Key for collections of dimension values."""
 
     def __init__(self, id: int, dim: Dimension, iter_type: type = list) -> None:
-        super().__init__(id, dim.name + 'Collection', dim.name_cn + '集合')
+        super().__init__(id, dim.name + "Collection", dim.name_cn + "集合")
         if iter_type not in (set, list, tuple):
             raise RegisterError(f"iter_type must be set, list, or tuple, got {iter_type}")
         self._dim = dim

@@ -179,6 +179,7 @@ class Parameter(RegisterKey):
             return sum(args)
         elif self.vtype is str or isinstance(self.vtype, Dimension):
             from collections import Counter
+
             return dict(Counter(args))
         raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
@@ -231,7 +232,9 @@ class IterParameter(RegisterKey):
     vtype: Any
     iter_vtype: Any
 
-    def __init__(self, id: int, name: str, name_cn: str, vtype: Any = None, iter_vtype: Any = list) -> None:
+    def __init__(
+        self, id: int, name: str, name_cn: str, vtype: Any = None, iter_vtype: Any = list
+    ) -> None:
         if iter_vtype not in (list, tuple):
             raise RegisterError("iter_vtype must be list or tuple")
         self._id = id
@@ -269,6 +272,7 @@ class IterParameter(RegisterKey):
             return [sum(elements) for elements in zip(*args, strict=True)]
         elif self.vtype is str or isinstance(self.vtype, Dimension):
             from collections import Counter
+
             return [dict(Counter(elements)) for elements in zip(*args, strict=True)]
         raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
@@ -316,6 +320,7 @@ class Method(int):
 from .key import RegisterKey
 
 K = TypeVar("K", bound=RegisterKey)
+
 
 class Register(Generic[K]):
     ALL: Method = Method(0)

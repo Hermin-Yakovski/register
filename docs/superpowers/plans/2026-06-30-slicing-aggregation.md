@@ -44,6 +44,7 @@ from register.key import _BaseKey, RegisterKey
 
 class ConcreteKey(_BaseKey):
     """Minimal concrete key for testing _BaseKey."""
+
     pass
 
 
@@ -77,6 +78,7 @@ class TestBaseKey:
     def test_eq_different_class(self):
         class OtherKey(_BaseKey):
             pass
+
         k1 = ConcreteKey(1, "a", "A")
         k2 = OtherKey(1, "a", "A")
         assert k1 != k2
@@ -159,7 +161,9 @@ class RegisterKey(ABC):
     def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]: ...
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]: ...
 
 
 class _BaseKey(RegisterKey):
@@ -367,7 +371,9 @@ class NumKey(_BaseKey):
             raise RegisterError("range requires at least one value")
         return max(selection.values()) - min(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, self.vtype) for k, v in selection.items()}
 ```
 
@@ -475,7 +481,9 @@ class StrKey(_BaseKey):
             raise RegisterError("max requires at least one value")
         return max(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, str) for k, v in selection.items()}
 ```
 
@@ -586,7 +594,9 @@ class DimensionKey(_BaseKey):
             raise RegisterError("range requires at least one value")
         return min(selection.values()), max(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
         return {k: v in reference[Id][self._dim,] for k, v in selection.items()}
 ```
 
@@ -603,9 +613,12 @@ if TYPE_CHECKING:
 Actually, `Id` is used at runtime in `validate`, not just for type checking. We need a lazy import:
 
 ```python
-    def validate(self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any) -> dict[tuple[int, ...], bool]:
-        from .parameter import Id
-        return {k: v in reference[Id][self._dim,] for k, v in selection.items()}
+def validate(
+    self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any
+) -> dict[tuple[int, ...], bool]:
+    from .parameter import Id
+
+    return {k: v in reference[Id][self._dim,] for k, v in selection.items()}
 ```
 
 - [ ] **Step 4: Run DimensionKey tests**
@@ -688,18 +701,31 @@ class DimensionCollectionKey(_BaseKey):
         self._dim = dim
         self._iter_type = iter_type
 
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+    def min(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], Any]:
         return {k: min(v) for k, v in selection.items()}
 
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+    def max(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], Any]:
         return {k: max(v) for k, v in selection.items()}
 
-    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+    def range(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], Any]:
         return {k: (min(v), max(v)) for k, v in selection.items()}
 
-    def validate(self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], reference: Any, **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
-        return {k: isinstance(v, self._iter_type) and all(elem in reference[Id][self._dim,] for elem in v) for k, v in selection.items()}
+
+        return {
+            k: isinstance(v, self._iter_type)
+            and all(elem in reference[Id][self._dim,] for elem in v)
+            for k, v in selection.items()
+        }
 ```
 
 - [ ] **Step 8: Run tests to verify they pass**
@@ -913,7 +939,9 @@ class KeyView(Generic[K]):
     _key: K
     _data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]
 
-    def __init__(self, key: K, data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]) -> None:
+    def __init__(
+        self, key: K, data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]
+    ) -> None:
         self._key = key
         self._data = data
 
@@ -1123,6 +1151,7 @@ class TestIndexSpace:
 
     def test_slice_returns_selection(self):
         from register.register import Selection
+
         reg = Register()
         k = NumKey(1, "amount", "件量")
         dim = Dimension("loc", "地点", "L")
@@ -1477,11 +1506,25 @@ class TestExports:
 
     def test_all_exports(self):
         expected = {
-            "Register", "Method", "KeyView", "IndexSpace", "Selection",
-            "RegisterKey", "NumKey", "StrKey", "DimensionKey", "DimensionCollectionKey",
-            "Dimension", "Index", "Metric",
-            "Id", "Code", "Name",
-            "RegisterError", "ValidationError", "DimensionError",
+            "Register",
+            "Method",
+            "KeyView",
+            "IndexSpace",
+            "Selection",
+            "RegisterKey",
+            "NumKey",
+            "StrKey",
+            "DimensionKey",
+            "DimensionCollectionKey",
+            "Dimension",
+            "Index",
+            "Metric",
+            "Id",
+            "Code",
+            "Name",
+            "RegisterError",
+            "ValidationError",
+            "DimensionError",
         }
         assert expected == set(register.__all__)
 ```

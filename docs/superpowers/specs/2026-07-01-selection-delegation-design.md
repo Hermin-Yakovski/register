@@ -67,15 +67,15 @@ class Selection(Generic[K]):
         self._data = data
 
     def __getattr__(self, name: str) -> Any:
-        if name.startswith('_'):
+        if name.startswith("_"):
             raise AttributeError(name)
         fn = getattr(self._key, name)
-        if not callable(fn) or not getattr(fn, '_register_key_delegable', False):
-            raise AttributeError(
-                f"{type(self._key).__name__} has no delegable method '{name}'"
-            )
+        if not callable(fn) or not getattr(fn, "_register_key_delegable", False):
+            raise AttributeError(f"{type(self._key).__name__} has no delegable method '{name}'")
+
         def wrapper(**kwargs: Any) -> Any:
             return fn(self._data, **kwargs)
+
         return wrapper
 
     def __repr__(self) -> str:
@@ -150,8 +150,7 @@ Every delegable method must follow this pattern:
 
 ```python
 @delegable
-def method(self, selected: Selected, *, param1: type1, param2: type2 = default) -> ReturnType:
-    ...
+def method(self, selected: Selected, *, param1: type1, param2: type2 = default) -> ReturnType: ...
 ```
 
 - `self` — the key instance
@@ -185,9 +184,7 @@ class RegisterKey(ABC):
     def name_cn(self) -> str: ...
 
     @abstractmethod
-    def validate(
-        self, selected: Selected, **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]: ...
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]: ...
 ```
 
 ### What's removed from the ABC
@@ -226,9 +223,11 @@ class _BaseKey(RegisterKey):
         return hash((type(self).__name__, self._id, self._name))
 
     def __eq__(self, other: object) -> bool:
-        return (isinstance(other, self.__class__)
-                and self._id == getattr(other, "_id", None)
-                and self._name == getattr(other, "_name", None))
+        return (
+            isinstance(other, self.__class__)
+            and self._id == getattr(other, "_id", None)
+            and self._name == getattr(other, "_name", None)
+        )
 
     @property
     def id(self) -> int:
@@ -263,9 +262,7 @@ class _BaseKey(RegisterKey):
     def range(self, selected: Selected) -> Any:
         raise NotImplementedError(f"range not supported for {type(self).__name__}")
 
-    def validate(
-        self, selected: Selected, **kwargs: Any
-    ) -> dict[tuple[int, ...], bool]:
+    def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         raise NotImplementedError(f"validate not supported for {type(self).__name__}")
 ```
 
@@ -276,6 +273,7 @@ External key types (e.g., `MatrixKey` defined outside the `register` package) in
 ```python
 from register import RegisterKey, delegable
 
+
 class MatrixKey(RegisterKey):
     def __init__(self, id: int, name: str, name_cn: str):
         self._id = id
@@ -283,11 +281,16 @@ class MatrixKey(RegisterKey):
         self._name_cn = name_cn
 
     @property
-    def id(self): return self._id
+    def id(self):
+        return self._id
+
     @property
-    def name(self): return self._name
+    def name(self):
+        return self._name
+
     @property
-    def name_cn(self): return self._name_cn
+    def name_cn(self):
+        return self._name_cn
 
     def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, np.ndarray) for k, v in selected.items()}
@@ -299,15 +302,16 @@ class MatrixKey(RegisterKey):
     @delegable
     def det(self, selected: Selected, *, method: str = "lu") -> dict[tuple[int, ...], float]:
         return {k: np.linalg.det(v) for k, v in selected.items()}
+
     # No sum, mean, min, max, range — AttributeError if called via Selection
 ```
 
 Usage:
 ```python
 sel = reg[MatrixKey][dims][:, :]
-sel.tr()                  # works — delegable, proxied to MatrixKey.tr
-sel.det(method="qr")      # works — delegable with concrete kwarg
-sel.sum()                 # AttributeError — no delegable 'sum' on MatrixKey
+sel.tr()  # works — delegable, proxied to MatrixKey.tr
+sel.det(method="qr")  # works — delegable with concrete kwarg
+sel.sum()  # AttributeError — no delegable 'sum' on MatrixKey
 ```
 
 ## Method Class and .agg() Removal
@@ -415,7 +419,7 @@ class StrKey(_BaseKey):
 ```python
 class DimensionKey(_BaseKey):
     def __init__(self, id: int, dim: Dimension) -> None:
-        super().__init__(id, dim.name + 'Id', dim.name_cn + 'ID')
+        super().__init__(id, dim.name + "Id", dim.name_cn + "ID")
         self._dim = dim
 
     @delegable
@@ -438,6 +442,7 @@ class DimensionKey(_BaseKey):
 
     def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
+
         reference = kwargs["reference"]
         return {k: (v,) in reference[Id][self._dim,] for k, v in selected.items()}
 ```
@@ -447,7 +452,7 @@ class DimensionKey(_BaseKey):
 ```python
 class DimensionCollectionKey(_BaseKey):
     def __init__(self, id: int, dim: Dimension, iter_type: type = list) -> None:
-        super().__init__(id, dim.name + 'Collection', dim.name_cn + '集合')
+        super().__init__(id, dim.name + "Collection", dim.name_cn + "集合")
         if iter_type not in (set, list, tuple):
             raise RegisterError(f"iter_type must be set, list, or tuple, got {iter_type}")
         self._dim = dim
@@ -467,6 +472,7 @@ class DimensionCollectionKey(_BaseKey):
 
     def validate(self, selected: Selected, **kwargs: Any) -> dict[tuple[int, ...], bool]:
         from .parameter import Id
+
         reference = kwargs["reference"]
         result: dict[tuple[int, ...], bool] = {}
         for k, v in selected.items():
@@ -500,7 +506,15 @@ register/
 ## Exports
 
 ```python
-from .key import RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey, delegable, Selected
+from .key import (
+    RegisterKey,
+    NumKey,
+    StrKey,
+    DimensionKey,
+    DimensionCollectionKey,
+    delegable,
+    Selected,
+)
 from .register import Register, KeyView, IndexSpace, Selection
 from .parameter import Id, Code, Name
 from .dimension import Dimension, Index, Metric

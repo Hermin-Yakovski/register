@@ -52,11 +52,25 @@ class TestExports:
 
     def test_all_exports(self):
         expected = {
-            "Register", "KeyView", "IndexSpace", "Selection",
-            "RegisterKey", "NumKey", "StrKey", "DimensionKey", "DimensionCollectionKey",
-            "delegable", "Selected",
-            "Dimension", "Index", "Metric",
-            "Id", "Code", "Name",
-            "RegisterError", "ValidationError", "DimensionError",
+            "Register",
+            "KeyView",
+            "IndexSpace",
+            "Selection",
+            "RegisterKey",
+            "NumKey",
+            "StrKey",
+            "DimensionKey",
+            "DimensionCollectionKey",
+            "delegable",
+            "Selected",
+            "Dimension",
+            "Index",
+            "Metric",
+            "Id",
+            "Code",
+            "Name",
+            "RegisterError",
+            "ValidationError",
+            "DimensionError",
         }
         assert expected == set(register.__all__)

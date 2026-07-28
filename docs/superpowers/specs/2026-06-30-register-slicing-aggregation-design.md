@@ -9,10 +9,10 @@
 Add pandas-style slicing and aggregation delegation to Register. The API supports:
 
 ```python
-reg[Amount][Location, Owner][1, 1] = 1.1          # exact assignment
-reg[Amount][Location, Owner][:, :].sum()           # slice → aggregate = 16.5
-reg[Amount][Location, Owner][1, :].sum()           # partial slice = 3.3
-reg[Amount][Location, Owner][2, [1, 2]].sum()      # list selector = 7.7
+reg[Amount][Location, Owner][1, 1] = 1.1  # exact assignment
+reg[Amount][Location, Owner][:, :].sum()  # slice → aggregate = 16.5
+reg[Amount][Location, Owner][1, :].sum()  # partial slice = 3.3
+reg[Amount][Location, Owner][2, [1, 2]].sum()  # list selector = 7.7
 reg[Amount][Location, Owner][:, :].agg(Register.SUM)  # method-enum dispatch
 ```
 
@@ -96,6 +96,7 @@ reg._data[Amount][(Location, Owner)][(1, 1)] == 1.1
 ```python
 def _resolve(index: tuple, data: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
     return {k: v for k, v in data.items() if _matches(k, index)}
+
 
 def _matches(idx_tuple: tuple[int, ...], pattern: tuple) -> bool:
     for actual, selector in zip(idx_tuple, pattern):
@@ -227,7 +228,9 @@ class RegisterKey(ABC):
     def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]: ...
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]: ...
 ```
 
 ## Key Hierarchy
@@ -333,7 +336,9 @@ class NumKey(_BaseKey):
             raise RegisterError("range requires at least one value")
         return max(selection.values()) - min(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, self.vtype) for k, v in selection.items()}
 ```
 
@@ -358,7 +363,9 @@ class StrKey(_BaseKey):
             raise RegisterError("max requires at least one value")
         return max(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
         return {k: isinstance(v, str) for k, v in selection.items()}
 ```
 
@@ -389,7 +396,9 @@ class DimensionKey(_BaseKey):
             raise RegisterError("range requires at least one value")
         return min(selection.values()), max(selection.values())
 
-    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> dict[tuple[int, ...], bool]:
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
         return {k: v in reference[Id][self._dim,] for k, v in selection.items()}
 ```
 
@@ -408,17 +417,29 @@ class DimensionCollectionKey(_BaseKey):
         self._dim = dim
         self._iter_type = iter_type
 
-    def min(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+    def min(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], Any]:
         return {k: min(v) for k, v in selection.items()}
 
-    def max(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+    def max(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], Any]:
         return {k: max(v) for k, v in selection.items()}
 
-    def range(self, selection: dict[tuple[int, ...], Any], **kwargs: Any) -> dict[tuple[int, ...], Any]:
+    def range(
+        self, selection: dict[tuple[int, ...], Any], **kwargs: Any
+    ) -> dict[tuple[int, ...], Any]:
         return {k: (min(v), max(v)) for k, v in selection.items()}
 
-    def validate(self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any) -> dict[tuple[int, ...], bool]:
-        return {k: isinstance(v, self._iter_type) and all(elem in reference[Id][self._dim,] for elem in v) for k, v in selection.items()}
+    def validate(
+        self, selection: dict[tuple[int, ...], Any], reference: Register, **kwargs: Any
+    ) -> dict[tuple[int, ...], bool]:
+        return {
+            k: isinstance(v, self._iter_type)
+            and all(elem in reference[Id][self._dim,] for elem in v)
+            for k, v in selection.items()
+        }
 ```
 
 ### Aggregation support matrix
@@ -530,9 +551,9 @@ class Register(Generic[K]):
     def __contains__(self, key: K) -> bool:
         return key in self._data
 
-    def select(self, key: K, dimension: tuple[Dimension, ...],
-               target: tuple[int | None, ...] | None = None
-               ) -> Generator[tuple[int, ...], None, None]:
+    def select(
+        self, key: K, dimension: tuple[Dimension, ...], target: tuple[int | None, ...] | None = None
+    ) -> Generator[tuple[int, ...], None, None]:
         for index in self._data[key][dimension]:
             if target is None:
                 yield index

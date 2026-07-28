@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Generic, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from .dimension import Dimension
 from .key import RegisterKey, Selected
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView, ValuesView
-    from typing import Iterator
+    from collections.abc import Iterator, KeysView, ValuesView
 
 
 K = TypeVar("K", bound=RegisterKey)
@@ -48,20 +47,18 @@ class Selection(Generic[K]):
         return self._data.get(key, default)
 
     def __getattr__(self, name: str) -> Any:
-        if name.startswith('_'):
+        if name.startswith("_"):
             raise AttributeError(name)
         try:
             fn = getattr(self._key, name)
         except AttributeError:
-            raise AttributeError(
-                f"{type(self._key).__name__} has no delegable method '{name}'"
-            )
-        if not callable(fn) or not getattr(fn, '_register_key_delegable', False):
-            raise AttributeError(
-                f"{type(self._key).__name__} has no delegable method '{name}'"
-            )
+            raise AttributeError(f"{type(self._key).__name__} has no delegable method '{name}'")
+        if not callable(fn) or not getattr(fn, "_register_key_delegable", False):
+            raise AttributeError(f"{type(self._key).__name__} has no delegable method '{name}'")
+
         def wrapper(**kwargs: Any) -> Any:
             return fn(self, **kwargs)
+
         return wrapper
 
     def __repr__(self) -> str:
@@ -74,7 +71,9 @@ class IndexSpace(Generic[K]):
     _dims: tuple[Dimension, ...]
     _data: dict[tuple[int, ...], Any]
 
-    def __init__(self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]) -> None:
+    def __init__(
+        self, key: K, dims: tuple[Dimension, ...], data: dict[tuple[int, ...], Any]
+    ) -> None:
         self._key = key
         self._dims = dims
         self._data = data
@@ -120,7 +119,9 @@ class KeyView(Generic[K]):
     _key: K
     _data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]
 
-    def __init__(self, key: K, data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]) -> None:
+    def __init__(
+        self, key: K, data: dict[tuple[Dimension, ...], dict[tuple[int, ...], Any]]
+    ) -> None:
         self._key = key
         self._data = data
 
@@ -188,7 +189,9 @@ def _has_slice(index: tuple[Any, ...]) -> bool:
     return any(isinstance(elem, (slice, list)) for elem in index)
 
 
-def _resolve(index: tuple[Any, ...], data: dict[tuple[int, ...], Any]) -> dict[tuple[int, ...], Any]:
+def _resolve(
+    index: tuple[Any, ...], data: dict[tuple[int, ...], Any]
+) -> dict[tuple[int, ...], Any]:
     if not isinstance(index, tuple):
         index = (index,)
     return {k: v for k, v in data.items() if _matches(k, index)}
@@ -211,8 +214,8 @@ def _matches(idx_tuple: tuple[int, ...], pattern: tuple[Any, ...]) -> bool:
 
 
 __all__ = [
-    "Register",
-    "KeyView",
     "IndexSpace",
+    "KeyView",
+    "Register",
     "Selection",
 ]
