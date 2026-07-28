@@ -1,5 +1,5 @@
-from register.parameter import Id, Code, Name
 from register.key import NumKey, StrKey
+from register.parameter import Code, Id, Name
 
 
 class TestId:

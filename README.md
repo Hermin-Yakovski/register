@@ -14,16 +14,16 @@ pip install register
 from register import Register, Parameter, Dimension
 
 # Define custom parameter and dimension
-price = Parameter(4, 'price', '价格', float)
-region = Dimension('region', '地区', 'REG')
+price = Parameter(4, "price", "价格", float)
+region = Dimension("region", "地区", "REG")
 
 # Use the register
 reg = Register()
-reg[price][(region,)][('Beijing',)] = 100.0
-reg[price][(region,)][('Shanghai',)] = 150.0
+reg[price][(region,)][("Beijing",)] = 100.0
+reg[price][(region,)][("Shanghai",)] = 150.0
 
 # Select data
-for index in reg.select(price, (region,), ('Beijing',)):
+for index in reg.select(price, (region,), ("Beijing",)):
     print(f"Price in Beijing: {reg[price][(region,)][index]}")
 
 # Export to DataFrame

@@ -8,7 +8,7 @@ def test_register_error_exists():
 
 
 def test_validation_error_exists():
-    from register.exception import ValidationError, RegisterError
+    from register.exception import RegisterError, ValidationError
 
     assert issubclass(ValidationError, RegisterError)
 

@@ -1,12 +1,12 @@
 import pytest
-from register.key import _BaseKey, RegisterKey, NumKey, StrKey, DimensionKey, DimensionCollectionKey
+
 from register.dimension import Dimension
 from register.exception import RegisterError
+from register.key import DimensionCollectionKey, DimensionKey, NumKey, RegisterKey, StrKey, _BaseKey
 
 
 class ConcreteKey(_BaseKey):
     """Minimal concrete key for testing _BaseKey."""
-    pass
 
 
 class TestBaseKey:
@@ -39,6 +39,7 @@ class TestBaseKey:
     def test_eq_different_class(self):
         class OtherKey(_BaseKey):
             pass
+
         k1 = ConcreteKey(1, "a", "A")
         k2 = OtherKey(1, "a", "A")
         assert k1 != k2
@@ -79,23 +80,23 @@ class TestBaseKey:
 
     def test_sum_is_delegable(self):
         k = ConcreteKey(1, "a", "A")
-        assert getattr(k.sum, '_register_key_delegable', False) is True
+        assert getattr(k.sum, "_register_key_delegable", False) is True
 
     def test_mean_is_delegable(self):
         k = ConcreteKey(1, "a", "A")
-        assert getattr(k.mean, '_register_key_delegable', False) is True
+        assert getattr(k.mean, "_register_key_delegable", False) is True
 
     def test_min_is_delegable(self):
         k = ConcreteKey(1, "a", "A")
-        assert getattr(k.min, '_register_key_delegable', False) is True
+        assert getattr(k.min, "_register_key_delegable", False) is True
 
     def test_max_is_delegable(self):
         k = ConcreteKey(1, "a", "A")
-        assert getattr(k.max, '_register_key_delegable', False) is True
+        assert getattr(k.max, "_register_key_delegable", False) is True
 
     def test_range_is_delegable(self):
         k = ConcreteKey(1, "a", "A")
-        assert getattr(k.range, '_register_key_delegable', False) is True
+        assert getattr(k.range, "_register_key_delegable", False) is True
 
 
 class TestNumKey:
@@ -226,23 +227,23 @@ class TestNumKey:
 
     def test_sum_is_delegable(self):
         k = NumKey(1, "a", "A", float)
-        assert getattr(k.sum, '_register_key_delegable', False) is True
+        assert getattr(k.sum, "_register_key_delegable", False) is True
 
     def test_mean_is_delegable(self):
         k = NumKey(1, "a", "A", float)
-        assert getattr(k.mean, '_register_key_delegable', False) is True
+        assert getattr(k.mean, "_register_key_delegable", False) is True
 
     def test_min_is_delegable(self):
         k = NumKey(1, "a", "A", float)
-        assert getattr(k.min, '_register_key_delegable', False) is True
+        assert getattr(k.min, "_register_key_delegable", False) is True
 
     def test_max_is_delegable(self):
         k = NumKey(1, "a", "A", float)
-        assert getattr(k.max, '_register_key_delegable', False) is True
+        assert getattr(k.max, "_register_key_delegable", False) is True
 
     def test_range_is_delegable(self):
         k = NumKey(1, "a", "A", float)
-        assert getattr(k.range, '_register_key_delegable', False) is True
+        assert getattr(k.range, "_register_key_delegable", False) is True
 
 
 class TestStrKey:
@@ -296,11 +297,11 @@ class TestStrKey:
 
     def test_min_is_delegable(self):
         k = StrKey(1, "a", "A")
-        assert getattr(k.min, '_register_key_delegable', False) is True
+        assert getattr(k.min, "_register_key_delegable", False) is True
 
     def test_max_is_delegable(self):
         k = StrKey(1, "a", "A")
-        assert getattr(k.max, '_register_key_delegable', False) is True
+        assert getattr(k.max, "_register_key_delegable", False) is True
 
 
 class TestDimensionKey:
@@ -358,7 +359,8 @@ class TestDimensionKey:
             k.mean({(1,): 1})
 
     def test_validate(self):
-        from register import Register, Id
+        from register import Id, Register
+
         dim = Dimension("location", "地点", "L")
         k = DimensionKey(1, dim)
         ref = Register()
@@ -370,17 +372,17 @@ class TestDimensionKey:
     def test_min_is_delegable(self):
         dim = Dimension("location", "地点", "L")
         k = DimensionKey(1, dim)
-        assert getattr(k.min, '_register_key_delegable', False) is True
+        assert getattr(k.min, "_register_key_delegable", False) is True
 
     def test_max_is_delegable(self):
         dim = Dimension("location", "地点", "L")
         k = DimensionKey(1, dim)
-        assert getattr(k.max, '_register_key_delegable', False) is True
+        assert getattr(k.max, "_register_key_delegable", False) is True
 
     def test_range_is_delegable(self):
         dim = Dimension("location", "地点", "L")
         k = DimensionKey(1, dim)
-        assert getattr(k.range, '_register_key_delegable', False) is True
+        assert getattr(k.range, "_register_key_delegable", False) is True
 
 
 class TestDimensionCollectionKey:
@@ -430,7 +432,8 @@ class TestDimensionCollectionKey:
             k.mean({(1,): [1, 2]})
 
     def test_validate(self):
-        from register import Register, Id
+        from register import Id, Register
+
         dim = Dimension("location", "地点", "L")
         k = DimensionCollectionKey(1, dim)
         ref = Register()
@@ -446,17 +449,17 @@ class TestDimensionCollectionKey:
     def test_min_is_delegable(self):
         dim = Dimension("location", "地点", "L")
         k = DimensionCollectionKey(1, dim)
-        assert getattr(k.min, '_register_key_delegable', False) is True
+        assert getattr(k.min, "_register_key_delegable", False) is True
 
     def test_max_is_delegable(self):
         dim = Dimension("location", "地点", "L")
         k = DimensionCollectionKey(1, dim)
-        assert getattr(k.max, '_register_key_delegable', False) is True
+        assert getattr(k.max, "_register_key_delegable", False) is True
 
     def test_range_is_delegable(self):
         dim = Dimension("location", "地点", "L")
         k = DimensionCollectionKey(1, dim)
-        assert getattr(k.range, '_register_key_delegable', False) is True
+        assert getattr(k.range, "_register_key_delegable", False) is True
 
 
 class TestDelegable:

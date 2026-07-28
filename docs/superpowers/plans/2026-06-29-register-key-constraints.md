@@ -334,6 +334,7 @@ class TestParameterKeySum:
 
     def test_sum_dimension(self):
         from register.dimension import Dimension
+
         d1 = Dimension("r1", "区域1", "R1")
         d2 = Dimension("r2", "区域2", "R2")
         k = ParameterKey(1, "test", "测试", d1)
@@ -364,6 +365,7 @@ class ParameterKey(_BaseKey):
             return sum(args)
         elif self.vtype is str or isinstance(self.vtype, Dimension):
             from collections import Counter
+
             return dict(Counter(args))
         raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
@@ -417,6 +419,7 @@ class TestParameterKeyMean:
 
     def test_mean_empty_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.mean(DimensionAsKey())
@@ -449,12 +452,14 @@ class TestParameterKeyMin:
 
     def test_min_empty_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.min(DimensionAsKey())
 
     def test_min_dimension_not_implemented(self):
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = ParameterKey(1, "test", "测试", d)
         with pytest.raises(NotImplementedError):
@@ -483,12 +488,14 @@ class TestParameterKeyMax:
 
     def test_max_empty_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.max(DimensionAsKey())
 
     def test_max_dimension_not_implemented(self):
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = ParameterKey(1, "test", "测试", d)
         with pytest.raises(NotImplementedError):
@@ -513,6 +520,7 @@ class TestParameterKeyRange:
 
     def test_range_empty_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.range(DimensionAsKey())
@@ -524,6 +532,7 @@ class TestParameterKeyRange:
 
     def test_range_dimension_not_implemented(self):
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = ParameterKey(1, "test", "测试", d)
         with pytest.raises(NotImplementedError):
@@ -540,33 +549,36 @@ Expected: FAIL — `NotImplementedError` on mean/min/max/range calls
 Replace the remaining stubs in `ParameterKey` within `register/key.py`:
 
 ```python
-    def mean(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("mean requires at least one value")
-        if self.vtype in (int, float, bool):
-            return sum(args) / len(args)
-        raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
+def mean(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("mean requires at least one value")
+    if self.vtype in (int, float, bool):
+        return sum(args) / len(args)
+    raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
-    def min(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("min requires at least one value")
-        if self.vtype in (int, float, bool, str):
-            return min(args)
-        raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
 
-    def max(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("max requires at least one value")
-        if self.vtype in (int, float, bool, str):
-            return max(args)
-        raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
+def min(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("min requires at least one value")
+    if self.vtype in (int, float, bool, str):
+        return min(args)
+    raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
 
-    def range(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("range requires at least one value")
-        if self.vtype in (int, float, bool):
-            return max(args) - min(args)
-        raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
+
+def max(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("max requires at least one value")
+    if self.vtype in (int, float, bool, str):
+        return max(args)
+    raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
+
+
+def range(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("range requires at least one value")
+    if self.vtype in (int, float, bool):
+        return max(args) - min(args)
+    raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
 ```
 
 Add the `RegisterError` import at the top of `key.py`:
@@ -611,11 +623,13 @@ class TestPositionKeyConstructor:
 
     def test_arity_zero_raises(self):
         from register.exception import RegisterError
+
         with pytest.raises(RegisterError):
             PositionKey(1, "xy", "坐标", float, arity=0)
 
     def test_arity_negative_raises(self):
         from register.exception import RegisterError
+
         with pytest.raises(RegisterError):
             PositionKey(1, "xy", "坐标", float, arity=-1)
 
@@ -647,9 +661,7 @@ Replace the `PositionKey` stub in `register/key.py`:
 class PositionKey(_BaseKey):
     """Key for positional values — tuples of the same length."""
 
-    def __init__(
-        self, id: int, name: str, name_cn: str, vtype: Any = None, arity: int = 0
-    ) -> None:
+    def __init__(self, id: int, name: str, name_cn: str, vtype: Any = None, arity: int = 0) -> None:
         super().__init__(id, name, name_cn, vtype)
         if arity < 1:
             raise RegisterError("arity must be >= 1")
@@ -730,12 +742,14 @@ class TestPositionKeyAggregation:
 
     def test_empty_args_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int, arity=3)
         with pytest.raises(RegisterError):
             k.sum(DimensionAsKey())
 
     def test_mean_empty_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(float, arity=2)
         with pytest.raises(RegisterError):
             k.mean(DimensionAsKey())
@@ -756,40 +770,44 @@ Expected: FAIL — `NotImplementedError`
 Replace the remaining stubs in `PositionKey` within `register/key.py`:
 
 ```python
-    def sum(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("sum requires at least one value")
-        if self.vtype in (int, float, bool):
-            return [sum(elems) for elems in zip(*args, strict=True)]
-        raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
+def sum(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("sum requires at least one value")
+    if self.vtype in (int, float, bool):
+        return [sum(elems) for elems in zip(*args, strict=True)]
+    raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
-    def mean(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("mean requires at least one value")
-        if self.vtype in (int, float, bool):
-            return [sum(elems) / len(args) for elems in zip(*args, strict=True)]
-        raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
-    def min(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("min requires at least one value")
-        if self.vtype in (int, float, bool):
-            return [min(elems) for elems in zip(*args, strict=True)]
-        raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
+def mean(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("mean requires at least one value")
+    if self.vtype in (int, float, bool):
+        return [sum(elems) / len(args) for elems in zip(*args, strict=True)]
+    raise NotImplementedError(f"mean not implemented for vtype={self.vtype}")
 
-    def max(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("max requires at least one value")
-        if self.vtype in (int, float, bool):
-            return [max(elems) for elems in zip(*args, strict=True)]
-        raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
 
-    def range(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
-        if not args:
-            raise RegisterError("range requires at least one value")
-        if self.vtype in (int, float, bool):
-            return [max(elems) - min(elems) for elems in zip(*args, strict=True)]
-        raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
+def min(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("min requires at least one value")
+    if self.vtype in (int, float, bool):
+        return [min(elems) for elems in zip(*args, strict=True)]
+    raise NotImplementedError(f"min not implemented for vtype={self.vtype}")
+
+
+def max(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("max requires at least one value")
+    if self.vtype in (int, float, bool):
+        return [max(elems) for elems in zip(*args, strict=True)]
+    raise NotImplementedError(f"max not implemented for vtype={self.vtype}")
+
+
+def range(self, data: DimensionAsKey, *args: Any, **kwargs: Any) -> Any:
+    if not args:
+        raise RegisterError("range requires at least one value")
+    if self.vtype in (int, float, bool):
+        return [max(elems) - min(elems) for elems in zip(*args, strict=True)]
+    raise NotImplementedError(f"range not implemented for vtype={self.vtype}")
 ```
 
 - [ ] **Step 8: Run all PositionKey tests to verify they pass**
@@ -849,6 +867,7 @@ class TestIterableKeyAggregation:
 
     def test_sum_dimension(self):
         from register.dimension import Dimension
+
         d1 = Dimension("r1", "区域1", "R1")
         d2 = Dimension("r2", "区域2", "R2")
         k = IterableKey(1, "test", "测试", d1)
@@ -873,6 +892,7 @@ class TestIterableKeyAggregation:
 
     def test_mean_empty_iterable_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.mean(DimensionAsKey(), [])
@@ -895,12 +915,14 @@ class TestIterableKeyAggregation:
 
     def test_min_empty_iterable_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.min(DimensionAsKey(), [])
 
     def test_min_dimension_not_implemented(self):
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = IterableKey(1, "test", "测试", d)
         with pytest.raises(NotImplementedError):
@@ -919,12 +941,14 @@ class TestIterableKeyAggregation:
 
     def test_max_empty_iterable_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.max(DimensionAsKey(), [])
 
     def test_max_dimension_not_implemented(self):
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = IterableKey(1, "test", "测试", d)
         with pytest.raises(NotImplementedError):
@@ -938,6 +962,7 @@ class TestIterableKeyAggregation:
 
     def test_range_empty_iterable_raises(self):
         from register.exception import RegisterError
+
         k = self._make_key(int)
         with pytest.raises(RegisterError):
             k.range(DimensionAsKey(), [])
@@ -949,6 +974,7 @@ class TestIterableKeyAggregation:
 
     def test_range_dimension_not_implemented(self):
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = IterableKey(1, "test", "测试", d)
         with pytest.raises(NotImplementedError):
@@ -983,6 +1009,7 @@ class IterableKey(_BaseKey):
             return [sum(a) for a in args]
         elif self.vtype is str or isinstance(self.vtype, Dimension):
             from collections import Counter
+
             return [dict(Counter(a)) for a in args]
         raise NotImplementedError(f"sum not implemented for vtype={self.vtype}")
 
@@ -1042,6 +1069,7 @@ Add to `tests/test_key.py`:
 class TestParameterKeyValidate:
     def test_valid_int_values(self):
         from register.register import DimensionAsKey
+
         k = ParameterKey(1, "age", "年龄", int)
         dak = DimensionAsKey()
         dak[()][(1,)] = 25
@@ -1050,6 +1078,7 @@ class TestParameterKeyValidate:
 
     def test_invalid_int_value(self):
         from register.register import DimensionAsKey
+
         k = ParameterKey(1, "age", "年龄", int)
         dak = DimensionAsKey()
         dak[()][(1,)] = 25
@@ -1058,6 +1087,7 @@ class TestParameterKeyValidate:
 
     def test_valid_str_values(self):
         from register.register import DimensionAsKey
+
         k = ParameterKey(1, "code", "编码", str)
         dak = DimensionAsKey()
         dak[()][(1,)] = "A01"
@@ -1067,6 +1097,7 @@ class TestParameterKeyValidate:
     def test_valid_dimension_values(self):
         from register.register import DimensionAsKey
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = ParameterKey(1, "region", "地区", d)
         dak = DimensionAsKey()
@@ -1076,6 +1107,7 @@ class TestParameterKeyValidate:
     def test_invalid_dimension_value(self):
         from register.register import DimensionAsKey
         from register.dimension import Dimension
+
         d = Dimension("r", "区域", "R")
         k = ParameterKey(1, "region", "地区", d)
         dak = DimensionAsKey()
@@ -1084,12 +1116,14 @@ class TestParameterKeyValidate:
 
     def test_empty_data_is_valid(self):
         from register.register import DimensionAsKey
+
         k = ParameterKey(1, "age", "年龄", int)
         dak = DimensionAsKey()
         assert k.validate(dak) is True
 
     def test_none_vtype_is_valid(self):
         from register.register import DimensionAsKey
+
         k = ParameterKey(1, "x", "X")
         dak = DimensionAsKey()
         dak[()][(1,)] = "anything"
@@ -1100,6 +1134,7 @@ class TestParameterKeyValidate:
 class TestPositionKeyValidate:
     def test_valid_tuples(self):
         from register.register import DimensionAsKey
+
         k = PositionKey(1, "xy", "坐标", float, arity=2)
         dak = DimensionAsKey()
         dak[()][(1,)] = (1.0, 2.0)
@@ -1108,6 +1143,7 @@ class TestPositionKeyValidate:
 
     def test_wrong_arity(self):
         from register.register import DimensionAsKey
+
         k = PositionKey(1, "xy", "坐标", float, arity=2)
         dak = DimensionAsKey()
         dak[()][(1,)] = (1.0, 2.0, 3.0)
@@ -1115,6 +1151,7 @@ class TestPositionKeyValidate:
 
     def test_wrong_element_type(self):
         from register.register import DimensionAsKey
+
         k = PositionKey(1, "xy", "坐标", float, arity=2)
         dak = DimensionAsKey()
         dak[()][(1,)] = (1.0, "not a float")
@@ -1122,6 +1159,7 @@ class TestPositionKeyValidate:
 
     def test_not_a_tuple(self):
         from register.register import DimensionAsKey
+
         k = PositionKey(1, "xy", "坐标", float, arity=2)
         dak = DimensionAsKey()
         dak[()][(1,)] = [1.0, 2.0]
@@ -1129,6 +1167,7 @@ class TestPositionKeyValidate:
 
     def test_empty_data_is_valid(self):
         from register.register import DimensionAsKey
+
         k = PositionKey(1, "xy", "坐标", float, arity=2)
         dak = DimensionAsKey()
         assert k.validate(dak) is True
@@ -1137,6 +1176,7 @@ class TestPositionKeyValidate:
 class TestIterableKeyValidate:
     def test_valid_lists(self):
         from register.register import DimensionAsKey
+
         k = IterableKey(1, "scores", "分数", int)
         dak = DimensionAsKey()
         dak[()][(1,)] = [1, 2, 3]
@@ -1145,6 +1185,7 @@ class TestIterableKeyValidate:
 
     def test_invalid_element_type(self):
         from register.register import DimensionAsKey
+
         k = IterableKey(1, "scores", "分数", int)
         dak = DimensionAsKey()
         dak[()][(1,)] = [1, "two", 3]
@@ -1152,6 +1193,7 @@ class TestIterableKeyValidate:
 
     def test_not_iterable(self):
         from register.register import DimensionAsKey
+
         k = IterableKey(1, "scores", "分数", int)
         dak = DimensionAsKey()
         dak[()][(1,)] = 42
@@ -1159,6 +1201,7 @@ class TestIterableKeyValidate:
 
     def test_empty_data_is_valid(self):
         from register.register import DimensionAsKey
+
         k = IterableKey(1, "scores", "分数", int)
         dak = DimensionAsKey()
         assert k.validate(dak) is True

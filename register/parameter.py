@@ -5,7 +5,7 @@ Code = StrKey(2, "Code", "编码")
 Name = StrKey(3, "Name", "名称")
 
 __all__ = [
-    "Id",
     "Code",
+    "Id",
     "Name",
 ]

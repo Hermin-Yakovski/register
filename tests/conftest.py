@@ -1,5 +1,6 @@
 import pytest
-from register import Register, NumKey, Dimension
+
+from register import Dimension, NumKey, Register
 from register.parameter import Id
 
 

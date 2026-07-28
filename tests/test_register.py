@@ -1,5 +1,5 @@
+from register import Dimension, NumKey, Register, Selection
 from register.register import _has_slice, _matches, _resolve
-from register import Register, NumKey, Dimension, Selection
 
 
 class TestHasSlice:
@@ -284,6 +284,7 @@ class TestSelection:
     def test_proxy_non_delegable_raises(self):
         """Calling a non-@delegable method raises AttributeError."""
         import pytest
+
         sel = self.reg[self.k][self.dim,][:,]
         with pytest.raises(AttributeError, match="has no delegable method"):
             sel.validate()
@@ -291,6 +292,7 @@ class TestSelection:
     def test_proxy_undefined_raises(self):
         """Calling a nonexistent method raises AttributeError."""
         import pytest
+
         sel = self.reg[self.k][self.dim,][:,]
         with pytest.raises(AttributeError, match="has no delegable method"):
             sel.nonexistent_method()
@@ -298,14 +300,15 @@ class TestSelection:
     def test_proxy_private_raises(self):
         """Accessing _-prefixed attributes raises AttributeError."""
         import pytest
+
         sel = self.reg[self.k][self.dim,][:,]
         with pytest.raises(AttributeError):
             sel._private_method()
 
     def test_proxy_concrete_kwargs(self):
         """Delegable method works with proxy — kwargs passed through."""
-        from register.key import _BaseKey, delegable, Selected
         from register import Dimension
+        from register.key import Selected, _BaseKey, delegable
 
         class MockKey(_BaseKey):
             @delegable
