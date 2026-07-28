@@ -11,5 +11,6 @@ RUN uv sync --frozen --no-dev --no-install-workspace
 # Copy application code
 COPY register/ register/
 COPY main.py .
+COPY README.md .
 
 CMD ["uv", "run", "python", "-m", "main"]

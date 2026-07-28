@@ -8,5 +8,6 @@ if __name__ == "__main__":
     reg = Register()
     reg[Id][Index,][1,] = 1
     reg[Name][Index,][2,] = "x"
+    print(reg.validate())
 
     sys.exit(0)
