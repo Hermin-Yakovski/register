@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "or-register"
-version = "0.1.0"
+version = "0.2.0"
 description = "Multi-dimensional data registry"
 authors = [{name = "Hermin-Yakovski", email = "hemin.ye@qq.com"}]
 readme = "README.md"
