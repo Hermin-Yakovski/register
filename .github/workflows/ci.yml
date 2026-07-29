@@ -31,7 +31,7 @@ jobs:
         run: uv run mypy register/
 
       - name: Test
-        run: uv run pytest --cov --cov-report=term-missing --cov-report=html
+        run: uv run pytest
 
       - name: Upload HTML coverage report
         uses: actions/upload-artifact@v4

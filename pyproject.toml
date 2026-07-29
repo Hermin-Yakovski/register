@@ -22,6 +22,12 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["register"]
 
+[tool.coverage.run]
+source = ["register"]
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report=term-missing --cov-report=html"
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
