@@ -3,10 +3,10 @@ requires = ["hatchling>=1.20.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "register"
+name = "or-register"
 version = "0.1.0"
 description = "Multi-dimensional data registry"
-authors = [{name = "yehemin", email = "yehemin@example.com"}]
+authors = [{name = "Hermin-Yakovski", email = "hemin.ye@qq.com"}]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
