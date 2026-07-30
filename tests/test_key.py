@@ -1,8 +1,8 @@
 import pytest
 
-from register.dimension import Dimension
-from register.exception import RegisterError
-from register.key import DimensionCollectionKey, DimensionKey, NumKey, RegisterKey, StrKey, _BaseKey
+from or_register.dimension import Dimension
+from or_register.exception import RegisterError
+from or_register.key import DimensionCollectionKey, DimensionKey, NumKey, RegisterKey, StrKey, _BaseKey
 
 
 class ConcreteKey(_BaseKey):
@@ -359,7 +359,7 @@ class TestDimensionKey:
             k.mean({(1,): 1})
 
     def test_validate(self):
-        from register import Id, Register
+        from or_register import Id, Register
 
         dim = Dimension("location", "地点", "L")
         k = DimensionKey(1, dim)
@@ -432,7 +432,7 @@ class TestDimensionCollectionKey:
             k.mean({(1,): [1, 2]})
 
     def test_validate(self):
-        from register import Id, Register
+        from or_register import Id, Register
 
         dim = Dimension("location", "地点", "L")
         k = DimensionCollectionKey(1, dim)
@@ -464,7 +464,7 @@ class TestDimensionCollectionKey:
 
 class TestDelegable:
     def test_marks_function(self):
-        from register.key import delegable
+        from or_register.key import delegable
 
         def my_func(self, selected):
             return None
@@ -473,7 +473,7 @@ class TestDelegable:
         assert getattr(decorated, "_register_key_delegable", False) is True
 
     def test_returns_same_function(self):
-        from register.key import delegable
+        from or_register.key import delegable
 
         def my_func(self, selected):
             return None

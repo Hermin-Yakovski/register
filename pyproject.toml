@@ -20,10 +20,10 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["register"]
+packages = ["or_register"]
 
 [tool.coverage.run]
-source = ["register"]
+source = ["or_register"]
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report=term-missing --cov-report=html"

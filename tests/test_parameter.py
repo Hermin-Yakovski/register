@@ -1,5 +1,5 @@
-from register.key import NumKey, StrKey
-from register.parameter import Code, Id, Name
+from or_register.key import NumKey, StrKey
+from or_register.parameter import Code, Id, Name
 
 
 class TestId:

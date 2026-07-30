@@ -1,7 +1,7 @@
 import pytest
 
-from register import Dimension, NumKey, Register
-from register.parameter import Id
+from or_register import Dimension, NumKey, Register
+from or_register.parameter import Id
 
 
 @pytest.fixture

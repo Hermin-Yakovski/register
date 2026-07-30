@@ -1,5 +1,5 @@
-from register import Dimension, NumKey, Register, Selection
-from register.register import _has_slice, _matches, _resolve
+from or_register import Dimension, NumKey, Register, Selection
+from or_register.register import _has_slice, _matches, _resolve
 
 
 class TestHasSlice:
@@ -307,8 +307,8 @@ class TestSelection:
 
     def test_proxy_concrete_kwargs(self):
         """Delegable method works with proxy — kwargs passed through."""
-        from register import Dimension
-        from register.key import Selected, _BaseKey, delegable
+        from or_register import Dimension
+        from or_register.key import Selected, _BaseKey, delegable
 
         class MockKey(_BaseKey):
             @delegable

@@ -1,5 +1,5 @@
 def test_dimension_creation():
-    from register.dimension import Dimension
+    from or_register.dimension import Dimension
 
     dim = Dimension("test", "测试", "TST")
     assert dim.name == "test"
@@ -8,21 +8,21 @@ def test_dimension_creation():
 
 
 def test_dimension_str_returns_sign():
-    from register.dimension import Dimension
+    from or_register.dimension import Dimension
 
     dim = Dimension("test", "测试", "TST")
     assert str(dim) == "TST"
 
 
 def test_dimension_repr_returns_name():
-    from register.dimension import Dimension
+    from or_register.dimension import Dimension
 
     dim = Dimension("test", "测试", "TST")
     assert repr(dim) == "test"
 
 
 def test_dimension_hashable():
-    from register.dimension import Dimension
+    from or_register.dimension import Dimension
 
     dim1 = Dimension("test", "测试", "TST")
     dim2 = Dimension("test", "测试", "TST")
@@ -30,7 +30,7 @@ def test_dimension_hashable():
 
 
 def test_dimension_equality():
-    from register.dimension import Dimension
+    from or_register.dimension import Dimension
 
     dim1 = Dimension("test", "测试", "TST")
     dim2 = Dimension("test", "测试", "TST")
@@ -40,7 +40,7 @@ def test_dimension_equality():
 
 
 def test_dimension_equality_based_on_sign():
-    from register.dimension import Dimension
+    from or_register.dimension import Dimension
 
     dim1 = Dimension("name1", "测试1", "TST")
     dim2 = Dimension("name2", "测试2", "TST")
@@ -48,7 +48,7 @@ def test_dimension_equality_based_on_sign():
 
 
 def test_index_dimension_exists():
-    from register.dimension import Index
+    from or_register.dimension import Index
 
     assert Index.name == "Index"
     assert Index.name_cn == "下标"
@@ -56,7 +56,7 @@ def test_index_dimension_exists():
 
 
 def test_metric_dimension_exists():
-    from register.dimension import Metric
+    from or_register.dimension import Metric
 
     assert Metric.name == "Metric"
     assert Metric.name_cn == "汇总方式"
@@ -64,7 +64,7 @@ def test_metric_dimension_exists():
 
 
 def test_dimension_sign_property():
-    from register.dimension import Dimension
+    from or_register.dimension import Dimension
 
     dim = Dimension("test", "测试", "TST")
     assert dim.sign == "TST"

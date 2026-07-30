@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 K = TypeVar("K", bound=RegisterKey)
 
-logger = logging.getLogger("register")
+logger = logging.getLogger("or_register")
 
 
 class Selection(Generic[K]):
